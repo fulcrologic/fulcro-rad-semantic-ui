@@ -8,6 +8,7 @@
         [[com.fulcrologic.fulcro.dom-server :as dom :refer [div label input]]])
     [com.fulcrologic.rad.ui-validation :as validation]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
+    [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
     [com.fulcrologic.rad.attributes :as attr]
     [clojure.string :as str]
@@ -21,7 +22,7 @@
     ;; TODO: Sorting should be something users control
     (sort-by :text
       (mapv (fn [k]
-              {:text  (get enumeration-labels k (name k))
+              {:text  (?! (get enumeration-labels k (name k)))
                :value k}) enumerated-values))))
 
 (defn- render-to-many [{::form/keys [form-instance] :as env} {::form/keys [field-label]
