@@ -1,0 +1,23 @@
+= Fulcro RAD Semantic UI Rendering Plugin
+
+== Usage
+
+image:https://img.shields.io/clojars/v/com.fulcrologic/fulcro-rad-semantic-ui.svg[link=https://clojars.org/com.fulcrologic/fulcro-rad-semantic-ui]
+
+To use this library simply install the controls on your RAD application:
+
+[source]
+-----
+(ns com.example.main
+  (:require
+    [com.fulcrologic.rad.application :as rad-app]))
+
+(defonce app (-> (rad-app/fulcro-rad-app)
+                 (rad-app/install-ui-controls! sui/all-controls)))
+-----
+
+== License and Copyright
+
+This library is Copyright 2020 by Fulcrologic, LLC. All rights reserved.
+
+Formal licensing of this library has yet to be determined.
