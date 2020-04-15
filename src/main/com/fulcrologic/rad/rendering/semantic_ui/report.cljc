@@ -37,7 +37,8 @@
 
 (comp/defsc TableRowLayout [_ {:keys [report-instance props] :as rp}]
   {}
-  (let [{::report/keys [columns link]} (comp/component-options report-instance)
+  (let [{::report/keys [columns link links]} (comp/component-options report-instance)
+        links          (or links link)
         action-buttons (row-action-buttons report-instance props)
         {:keys         [highlighted?]
          ::report/keys [idx]} (comp/get-computed props)]
@@ -51,7 +52,7 @@
             (dom/td {:key     (str "col-" qualified-key)
                      :classes [column-classes]}
               (let [{:keys [edit-form entity-id]} (report/form-link report-instance props qualified-key)
-                    link-fn (get link qualified-key)
+                    link-fn (get links qualified-key)
                     label   (report/formatted-column-value report-instance props column)]
                 (cond
                   edit-form (dom/a {:onClick (fn [evt]
@@ -180,8 +181,8 @@
                                      ::attr/keys   [qualified-key] :as attr}]
                                  {:column attr
                                   :label  (or
-                                            (?! (get report-column-headings qualified-key))
-                                            (?! column-heading)
+                                            (?! (get report-column-headings qualified-key) report-instance)
+                                            (?! column-heading report-instance)
                                             (some-> qualified-key name str/capitalize)
                                             "")})
                            columns)
@@ -196,7 +197,7 @@
                              (fn [{::attr/keys [qualified-key]}] (contains? sortable-columns qualified-key))
                              (constantly true)))
         busy?            (:ui/busy? props)
-        forward?         (and sortable? (:forward? sort-params))
+        ascending?         (and sortable? (:ascending? sort-params))
         sorting-by       (and sortable? (:sort-by sort-params))
         has-row-actions? (seq row-actions)]
     (div
@@ -214,7 +215,7 @@
                                                     (evt/stop-propagation! evt)
                                                     (report/sort-rows! report-instance column))} (str label)
                                    (when (= sorting-by (::attr/qualified-key column))
-                                     (if forward?
+                                     (if ascending?
                                        (dom/i :.angle.down.icon)
                                        (dom/i :.angle.up.icon))))
                                  (str label))))
