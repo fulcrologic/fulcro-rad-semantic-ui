@@ -4,12 +4,12 @@
   <groupId>com.fulcrologic</groupId>
   <artifactId>fulcro-rad-semantic-ui</artifactId>
   <packaging>jar</packaging>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.2-alpha</version>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-  <name>Fulcro RAD</name>
-  <description>A rendering plugin for RAD that uses Semantic UI</description>
+  <name>Fulcro RAD Semantic UI</name>
+  <description>A UI plugin for Fulcro RAD that renders to web/electron using Semantic UI CSS</description>
   <url>https://github.com/fulcrologic/fulcro-rad-semantic-ui</url>
   <licenses>
     <license>
