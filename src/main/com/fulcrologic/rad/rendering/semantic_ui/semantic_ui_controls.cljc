@@ -3,6 +3,7 @@
    set SUI as the default control set."
   (:require
     [com.fulcrologic.rad.rendering.semantic-ui.form :as sui-form]
+    [com.fulcrologic.rad.rendering.semantic-ui.formatters :as formatters]
     [com.fulcrologic.rad.rendering.semantic-ui.entity-picker :as entity-picker]
     [com.fulcrologic.rad.rendering.semantic-ui.report :as sui-report]
     [com.fulcrologic.rad.rendering.semantic-ui.boolean-field :as boolean-field]
@@ -48,6 +49,13 @@
               :pick-many entity-picker/to-many-picker}}
 
    ;; Report-related controls
+   :com.fulcrologic.rad.report/type->formatter
+   {:string  (fn [report-instance value] value)
+    :instant (fn [report-instance value] (formatters/inst->human-readable-date value))
+    :int     (fn [report-instance value] (formatters/numeric->str value))
+    :decimal (fn [report-instance value] (formatters/numeric->str value))
+    :boolean (fn [report-instance value] (if value "true" "false"))}
+
    :com.fulcrologic.rad.report/style->layout
    {:default sui-report/render-table-report-layout
     :list    sui-report/render-list-report-layout}
