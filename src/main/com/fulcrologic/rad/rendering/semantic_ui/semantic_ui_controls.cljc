@@ -40,10 +40,11 @@
               :sorted-set                           text-field/render-dropdown
               :com.fulcrologic.rad.blob/file-upload blob-field/render-file-upload}
     :int     {:default int-field/render-field}
+    :long    {:default int-field/render-field}
     :decimal {:default decimal-field/render-field}
     :boolean {:default boolean-field/render-field}
-    :instant {:default      instant/render-field
-              :date-at-noon instant/render-date-at-noon-field}
+    :instant {:default       instant/render-field
+              :date-at-noon  instant/render-date-at-noon-field}
     :ref     {:pick-one  entity-picker/to-one-picker
               :pick-many entity-picker/to-many-picker}}
 
