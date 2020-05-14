@@ -4,7 +4,7 @@
   <groupId>com.fulcrologic</groupId>
   <artifactId>fulcro-rad-semantic-ui</artifactId>
   <packaging>jar</packaging>
-  <version>0.0.4-alpha-SNAPSHOT</version>
+  <version>0.0.4-alpha</version>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -68,7 +68,7 @@
     <dependency>
       <groupId>com.fulcrologic</groupId>
       <artifactId>fulcro-rad</artifactId>
-      <version>0.0.1-alpha-15</version>
+      <version>0.0.4-alpha</version>
     </dependency>
     <dependency>
       <groupId>com.fulcrologic</groupId>
@@ -78,12 +78,12 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>clojurescript</artifactId>
-      <version>1.10.597</version>
+      <version>1.10.758</version>
     </dependency>
     <dependency>
       <groupId>com.fulcrologic</groupId>
       <artifactId>semantic-ui-wrapper</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.1</version>
     </dependency>
   </dependencies>
 </project>
