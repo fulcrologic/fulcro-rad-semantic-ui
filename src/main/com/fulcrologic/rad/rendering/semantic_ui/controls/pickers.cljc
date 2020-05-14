@@ -12,7 +12,7 @@
   {:shouldComponentUpdate (fn [_ _ _] true)}
   (let [{:keys [:com.fulcrologic.rad.control/controls]} (comp/component-options report-instance)
         props (comp/props report-instance)
-        {:keys [label onChange disabled? visible? placeholder options user-props] :as control} (get controls control-key)]
+        {:keys [label onChange disabled? visible? action placeholder options user-props] :as control} (get controls control-key)]
     (when control
       (let [label       (or (?! label report-instance))
             disabled?   (?! disabled? report-instance)
@@ -32,7 +32,9 @@
                                                    (report/set-parameter! report-instance control-key v)
                                                    (binding [comp/*after-render* true]
                                                      (when onChange
-                                                       (onChange report-instance v))))}))))))))
+                                                       (onChange report-instance v))
+                                                     (when action
+                                                       (action report-instance))))}))))))))
 
 (def render-control (comp/factory SimplePicker {:keyfn :control-key}))
 
