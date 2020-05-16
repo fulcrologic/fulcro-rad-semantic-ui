@@ -11,6 +11,7 @@
     [com.fulcrologic.rad.rendering.semantic-ui.controls.boolean-control :as boolean-input]
     [com.fulcrologic.rad.rendering.semantic-ui.controls.action-button :as action-button]
     [com.fulcrologic.rad.rendering.semantic-ui.controls.text-input :as text-input]
+    [com.fulcrologic.rad.rendering.semantic-ui.controls.instant-inputs :as instant-input]
     [com.fulcrologic.rad.rendering.semantic-ui.controls.pickers :as picker-controls]
     [com.fulcrologic.rad.rendering.semantic-ui.instant-field :as instant]
     [com.fulcrologic.rad.rendering.semantic-ui.enumerated-field :as enumerated-field]
@@ -43,8 +44,8 @@
     :long    {:default int-field/render-field}
     :decimal {:default decimal-field/render-field}
     :boolean {:default boolean-field/render-field}
-    :instant {:default       instant/render-field
-              :date-at-noon  instant/render-date-at-noon-field}
+    :instant {:default      instant/render-field
+              :date-at-noon instant/render-date-at-noon-field}
     :ref     {:pick-one  entity-picker/to-one-picker
               :pick-many entity-picker/to-many-picker}}
 
@@ -65,6 +66,10 @@
               :default boolean-input/render-control}
     :string  {:default text-input/render-control
               :search  text-input/render-control}
+    :instant {:default       instant-input/date-time-control
+              :starting-date instant-input/midnight-on-date-control
+              :ending-date   instant-input/midnight-next-date-control
+              :date-at-noon  instant-input/date-at-noon-control}
     :picker  {:default picker-controls/render-control}
     :button  {:default action-button/render-control}}})
 

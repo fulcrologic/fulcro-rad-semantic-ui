@@ -18,7 +18,7 @@
 
 (defn row-action-buttons [report-instance row-props]
   (let [{::report/keys [row-actions]} (comp/component-options report-instance)]
-    (when (log/spy :info (seq row-actions))
+    (when (seq row-actions)
       (div :.ui.buttons
         (map-indexed
           (fn [idx {:keys [label reload? visible? disabled? action]}]
@@ -251,7 +251,7 @@
                                        label))))
                            columns)
         rows             (report/current-rows report-instance)
-        has-row-actions? (seq (log/spy :info row-actions))]
+        has-row-actions? (seq row-actions)]
     (dom/table :.ui.selectable.table {:classes [table-class]}
       (when (seq rows)
         (dom/tbody
