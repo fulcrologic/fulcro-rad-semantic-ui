@@ -275,7 +275,7 @@
                                                                                   (some-> props (comp/get-computed ::report/idx)))})))})
    :shouldComponentUpdate (fn [_ _ _] true)}
   (let [{::report/keys [rotate?]} (comp/component-options report-instance)
-        rotate?         (?! rotate? this)
+        rotate?         (?! rotate? report-instance)
         render-controls (report/control-renderer report-instance)
         loading?        (report/loading? report-instance)
         props           (comp/props report-instance)
