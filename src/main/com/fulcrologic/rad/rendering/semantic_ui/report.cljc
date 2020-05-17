@@ -239,35 +239,47 @@
                                                (?! column-heading report-instance)
                                                (some-> qualified-key name str/capitalize)
                                                "")]
-                                   (dom/th {:key qualified-key}
-                                     (if (sortable? attr)
-                                       (dom/a {:onClick (fn [evt]
-                                                          (evt/stop-propagation! evt)
-                                                          (report/sort-rows! report-instance attr))} label
-                                         (when (= sorting-by (::attr/qualified-key attr))
-                                           (if ascending?
-                                             (dom/i :.angle.down.icon)
-                                             (dom/i :.angle.up.icon))))
-                                       label))))
+                                   (if (sortable? attr)
+                                     (dom/a {:onClick (fn [evt]
+                                                        (evt/stop-propagation! evt)
+                                                        (report/sort-rows! report-instance attr))}
+                                       label
+                                       (when (= sorting-by (::attr/qualified-key attr))
+                                         (if ascending?
+                                           (dom/i :.angle.down.icon)
+                                           (dom/i :.angle.up.icon))))
+                                     label)))
                            columns)
         rows             (report/current-rows report-instance)
         has-row-actions? (seq row-actions)]
-    (dom/table :.ui.selectable.table {:classes [table-class]}
+    (dom/table :.ui.compact.collapsing.definition.selectable.table {:classes [table-class]}
       (when (seq rows)
-        (dom/tbody
-          (map-indexed
-            (fn [idx col]
-              (let [cell (if (zero? idx) dom/th dom/td)]
+        (comp/fragment
+          (dom/thead
+            (let [col (first columns)]
+              (dom/tr {:key "hrow"}
+                (dom/th
+                  (get row-headings 0))
+                (map-indexed
+                  (fn [idx row]
+                    (dom/th {:key idx}
+                      (report/formatted-column-value report-instance row col))) rows)
+                (when has-row-actions?
+                  (dom/td {:key "actions"}
+                    (row-action-buttons report-instance col))))))
+          (dom/tbody
+            (map-indexed
+              (fn [idx col]
                 (dom/tr {:key idx}
-                  (get row-headings idx)
+                  (dom/td (get row-headings (inc idx)))
                   (map-indexed
                     (fn [idx row]
-                      (cell {:key idx :class "right aligned"}
+                      (dom/td {:key idx :className "right aligned"}
                         (report/formatted-column-value report-instance row col))) rows)
                   (when has-row-actions?
                     (dom/td {:key "actions"}
-                      (row-action-buttons report-instance col))))))
-            columns))))))
+                      (row-action-buttons report-instance col)))))
+              (rest columns))))))))
 
 (comp/defsc TableReportLayout [this {:keys [report-instance] :as env}]
   {:initLocalState        (fn [this] {:row-factory (memoize (fn [cls] (comp/computed-factory cls
