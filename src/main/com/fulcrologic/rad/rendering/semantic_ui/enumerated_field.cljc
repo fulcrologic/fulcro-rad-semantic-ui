@@ -31,7 +31,7 @@
     (let [props        (comp/props form-instance)
           read-only?   (form/read-only? form-instance attribute)
           options      (enumerated-options env attribute)
-          selected-ids (get props qualified-key #{})]
+          selected-ids (set (get props qualified-key))]
       (div :.ui.field {:key (str qualified-key)}
         (label (or field-label (some-> qualified-key name str/capitalize)))
         (div :.ui.middle.aligned.celled.list.big {:style {:marginTop "0"}}
