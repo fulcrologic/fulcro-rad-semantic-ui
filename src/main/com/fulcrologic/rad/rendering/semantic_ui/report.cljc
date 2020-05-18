@@ -32,7 +32,7 @@
                              (when action
                                (action report-instance row-props)
                                (when reload?
-                                 (report/reload! report-instance))))}
+                                 (control/run! report-instance))))}
                 (?! label report-instance row-props))))
           row-actions)))))
 
@@ -107,7 +107,8 @@
   {:shouldComponentUpdate (fn [_ _ _] true)}
   (let [{:keys [::control/controls ::control/control-layout ::report/paginate?]} (comp/component-options report-instance)
         {:keys [action-buttons inputs]} (or control-layout (comp/component-options report-instance ::report/control-layout))]
-    (let [action-buttons (or action-buttons
+    (let [controlled?    (report/externally-controlled? report-instance)
+          action-buttons (or action-buttons
                            (keep (fn [[k v]] (when (= :button (:type v)) k)) controls))
           inputs         (or inputs
                            (vector (into [] (keep
@@ -118,14 +119,18 @@
           (dom/h3 :.ui.header
             (or (some-> report-instance comp/component-options ::report/title (?! report-instance)) "Report")
             (div :.ui.right.floated.buttons
-              (keep (fn [k] (report/render-control report-instance k))
+              (keep (fn [k]
+                      (let [control (get controls k)]
+                        (when (or (not controlled?) (:local? control))
+                          (control/render-control report-instance k control))))
                 action-buttons)))
           (div :.ui.form
             (map-indexed
               (fn [idx row]
                 (div {:key idx :className (sui-form/n-fields-string (count row))}
-                  (keep #(when (get controls %)
-                           (report/render-control report-instance %)) row)))
+                  (keep #(let [control (get controls %)]
+                           (when (or (not controlled?) (:local? control))
+                             (control/render-control report-instance % control))) row)))
               inputs))
           (when paginate?
             (let [page-count (report/page-count report-instance)]
