@@ -3,6 +3,7 @@
     [clojure.string :as str]
     [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.rad.report :as report]
+    [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.fulcro.components :as comp]
     #?@(:cljs
         [[com.fulcrologic.fulcro.dom :as dom :refer [div]]
@@ -104,8 +105,8 @@
 
 (comp/defsc StandardReportControls [this {:keys [report-instance] :as env}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
-  (let [{:keys [:com.fulcrologic.rad.control/controls ::report/control-layout ::report/paginate?]} (comp/component-options report-instance)
-        {:keys [action-buttons inputs]} control-layout]
+  (let [{:keys [::control/controls ::control/control-layout ::report/paginate?]} (comp/component-options report-instance)
+        {:keys [action-buttons inputs]} (or control-layout (comp/component-options report-instance ::report/control-layout))]
     (let [action-buttons (or action-buttons
                            (keep (fn [[k v]] (when (= :button (:type v)) k)) controls))
           inputs         (or inputs
