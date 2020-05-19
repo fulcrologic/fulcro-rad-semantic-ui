@@ -5,6 +5,7 @@
     [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.guardrails.core :refer [>defn =>]]
     [com.fulcrologic.rad.report :as report]
+    [com.fulcrologic.rad.control :as control]
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom]
        :clj  [com.fulcrologic.fulcro.dom-server :as dom])
     [taoensso.timbre :as log]))
@@ -18,9 +19,9 @@
       (let [label     (or (?! label instance))
             disabled? (?! disabled? instance)
             visible?  (or (nil? visible?) (?! visible? instance))
-            value     (get-in props [:ui/parameters control-key])
+            value     (control/current-value instance control-key)
             onChange  (fn [new-value]
-                        (uism/trigger! instance (comp/get-ident instance) :event/set-parameter {control-key new-value})
+                        (control/set-parameter! instance control-key new-value)
                         (when onChange
                           (onChange instance new-value)))]
         (when visible?

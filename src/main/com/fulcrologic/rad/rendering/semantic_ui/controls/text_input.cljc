@@ -3,6 +3,7 @@
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     [com.fulcrologic.fulcro.ui-state-machines :as uism]
     [com.fulcrologic.fulcro.dom.events :as evt]
+    [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.rad.options-util :refer [?! debounce]]
     [taoensso.timbre :as log]
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom]
@@ -18,10 +19,10 @@
             disabled?   (?! disabled? instance)
             placeholder (?! placeholder)
             visible?    (or (nil? visible?) (?! visible? instance))
-            chg!        #(uism/trigger! instance (comp/get-ident instance) :event/set-parameter {control-key (evt/target-value %)})
+            chg!        #(control/set-parameter! instance control-key (evt/target-value %))
             run!        (fn [evt] (let [v (evt/target-value evt)]
                                     (when onChange (onChange instance v))))
-            value       (get-in props [:ui/parameters control-key])]
+            value       (control/current-value instance control-key)]
         (when visible?
           (dom/div :.ui.field {:key (str control-key)}
             (dom/label label)

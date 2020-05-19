@@ -1,10 +1,9 @@
 (ns com.fulcrologic.rad.rendering.semantic-ui.controls.pickers
   (:require
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
-    [com.fulcrologic.fulcro.ui-state-machines :as uism]
+    [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
     [com.fulcrologic.rad.options-util :refer [?!]]
-    [com.fulcrologic.rad.report :as report]
     [taoensso.timbre :as log]
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom]
        :clj  [com.fulcrologic.fulcro.dom-server :as dom])))
@@ -19,7 +18,7 @@
             disabled?   (?! disabled? instance)
             placeholder (?! placeholder instance)
             visible?    (or (nil? visible?) (?! visible? instance))
-            value       (get-in props [:ui/parameters control-key])]
+            value       (control/current-value instance control-key)]
         (when visible?
           (dom/div :.ui.field {:key (str control-key)}
             (dom/label label)
@@ -30,7 +29,7 @@
                                     :options     options
                                     :value       value
                                     :onChange    (fn [v]
-                                                   (uism/trigger! instance (comp/get-ident instance) :event/set-parameter {control-key v})
+                                                   (control/set-parameter! instance control-key v)
                                                    (binding [comp/*after-render* true]
                                                      (when onChange
                                                        (onChange instance v))

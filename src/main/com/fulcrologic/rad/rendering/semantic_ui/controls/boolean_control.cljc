@@ -6,7 +6,8 @@
     [com.fulcrologic.rad.report :as report]
     [taoensso.timbre :as log]
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom]
-       :clj  [com.fulcrologic.fulcro.dom-server :as dom])))
+       :clj  [com.fulcrologic.fulcro.dom-server :as dom])
+    [com.fulcrologic.rad.control :as control]))
 
 (defsc BooleanControl [_ {:keys [instance control-key]}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
@@ -17,13 +18,13 @@
       (let [label     (or (?! label instance))
             disabled? (?! disabled? instance)
             visible?  (or (nil? visible?) (?! visible? instance))
-            value     (get-in props [:ui/parameters control-key])]
+            value     (control/current-value instance control-key)]
         (when visible?
           (dom/div :.ui.toggle.checkbox {:key (str control-key)}
             (dom/input {:type     "checkbox"
                         :readOnly (boolean disabled?)
                         :onChange (fn [_]
-                                    (uism/trigger! instance (comp/get-ident instance) :event/set-parameter {control-key (not value)})
+                                    (control/set-parameter! instance control-key (not value))
                                     (when onChange
                                       (onChange instance (not value))))
                         :checked  (boolean value)})
