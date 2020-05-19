@@ -106,9 +106,9 @@
 (comp/defsc StandardReportControls [this {:keys [report-instance] :as env}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
   (let [{:keys [::control/controls ::control/control-layout ::report/paginate?]} (comp/component-options report-instance)
-        {:keys [action-buttons inputs]} (or control-layout (comp/component-options report-instance ::report/control-layout))]
-    (let [controlled?    (report/externally-controlled? report-instance)
-          action-buttons (or action-buttons
+        {:keys [action-buttons inputs]} (or control-layout (comp/component-options report-instance ::report/control-layout))
+        {:com.fulcrologic.rad.container/keys [controlled?]} (comp/get-computed report-instance)]
+    (let [action-buttons (or action-buttons
                            (keep (fn [[k v]] (when (= :button (:type v)) k)) controls))
           inputs         (or inputs
                            (vector (into [] (keep
@@ -228,7 +228,7 @@
 
 (defn render-rotated-table [_ {:keys [report-instance] :as env}]
   (let [{report-column-headings ::report/column-headings
-         ::report/keys          [columns row-actions BodyItem compare-rows table-class]} (comp/component-options report-instance)
+         ::report/keys          [columns row-actions compare-rows table-class]} (comp/component-options report-instance)
         props            (comp/props report-instance)
         sort-params      (-> props :ui/parameters ::report/sort)
         sortable?        (if-not (boolean compare-rows)

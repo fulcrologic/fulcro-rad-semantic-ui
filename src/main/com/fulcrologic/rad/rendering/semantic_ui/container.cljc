@@ -54,7 +54,7 @@
           (map-indexed
             (fn [idx cls]
               (let [k       (comp/class->registry-key cls)
-                    factory (comp/factory cls)
+                    factory (comp/computed-factory cls)
                     props   (get container-props k {})]
                 (dom/div {:key idx}
-                  (factory props)))) children))))))
+                  (factory props {::container/controlled? true})))) children))))))
