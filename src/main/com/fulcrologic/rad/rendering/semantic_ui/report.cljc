@@ -296,6 +296,7 @@
         rotate?         (?! rotate? report-instance)
         render-controls (report/control-renderer report-instance)
         loading?        (report/loading? report-instance)
+        controlled?     (comp/get-computed report-instance :com.fulcrologic.rad.container/controlled?)
         props           (comp/props report-instance)
         busy?           (:ui/busy? props)]
     (div

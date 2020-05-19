@@ -26,7 +26,7 @@
                                                                       (:local? v)
                                                                       (= :button (:type v))) k))
                                               controls))))]
-      (div :.ui.top.attached.compact.segment
+      (div :.ui.top.attached.compact.basic.segment
         (dom/h3 :.ui.header
           (or (some-> instance comp/component-options ::container/title (?! instance)) "")
           (div :.ui.right.floated.buttons
@@ -44,17 +44,40 @@
   (defn render-standard-controls [instance]
     (ui-standard-container-controls {:instance instance})))
 
+(def n-string {0 "zero"
+               1 "one"
+               2 "two"
+               3 "three"
+               4 "four"
+               5 "five"
+               6 "six"
+               7 "seven"
+               8 "eight"})
+
 (defn render-container-layout [container-instance]
   (let [{::container/keys [children layout]} (comp/component-options container-instance)]
-    ;; TODO: Layout. Custom controls rendering as a separate config?
-    (let [container-props (comp/props container-instance)]
-      (dom/div :.ui.segments
+    ;; TODO: Custom controls rendering as a separate config?
+    (let [container-props (comp/props container-instance)
+          render-cls      (fn [cls]
+                            (let [k       (comp/class->registry-key cls)
+                                  factory (comp/computed-factory cls)
+                                  props   (get container-props k {})]
+                              (factory props {::container/controlled? true})))]
+      (dom/div :.ui.basic.segments
         (render-standard-controls container-instance)
-        (dom/div :.ui.attached.segment
-          (map-indexed
-            (fn [idx cls]
-              (let [k       (comp/class->registry-key cls)
-                    factory (comp/computed-factory cls)
-                    props   (get container-props k {})]
+        (dom/div :.ui.basic.segment
+          (if layout
+            (dom/div :.ui.container.grid
+              (map-indexed
+                (fn *render-row [idx row]
+                  (dom/div {:key idx :classes [(n-string (count row)) "column row"]}
+                    (map-indexed
+                      (fn *render-col [idx cls]
+                        (dom/div :.column {:key idx}
+                          (render-cls cls)))
+                      row)))
+                layout))
+            (map-indexed
+              (fn [idx cls]
                 (dom/div {:key idx}
-                  (factory props {::container/controlled? true})))) children))))))
+                  (render-cls cls))) children)))))))
