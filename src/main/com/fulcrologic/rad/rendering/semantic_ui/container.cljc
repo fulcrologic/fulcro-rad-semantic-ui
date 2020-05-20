@@ -58,8 +58,8 @@
   (let [{::container/keys [children layout]} (comp/component-options container-instance)]
     ;; TODO: Custom controls rendering as a separate config?
     (let [container-props (comp/props container-instance)
-          render-cls      (fn [cls]
-                            (let [k       (comp/class->registry-key cls)
+          render-cls      (fn [idx cls]
+                            (let [k       (keyword (str "child" idx))
                                   factory (comp/computed-factory cls)
                                   props   (get container-props k {})]
                               (factory props {::container/controlled? true})))]
@@ -71,13 +71,14 @@
               (map-indexed
                 (fn *render-row [idx row]
                   (dom/div {:key idx :classes [(n-string (count row)) "column row"]}
-                    (map-indexed
-                      (fn *render-col [idx cls]
-                        (dom/div :.column {:key idx}
-                          (render-cls cls)))
+                    (map
+                      (fn *render-col [idx]
+                        (let [cls (get children idx)]
+                          (dom/div :.column {:key idx}
+                            (render-cls idx cls))))
                       row)))
                 layout))
-            (map-indexed
-              (fn [idx cls]
+            (map
+              (fn [[idx cls]]
                 (dom/div {:key idx}
-                  (render-cls cls))) children)))))))
+                  (render-cls idx cls))) (container/id-child-pairs children))))))))
