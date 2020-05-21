@@ -3,6 +3,7 @@
    set SUI as the default control set."
   (:require
     [com.fulcrologic.rad.rendering.semantic-ui.form :as sui-form]
+    [com.fulcrologic.rad.rendering.semantic-ui.container :as sui-container]
     [com.fulcrologic.rad.rendering.semantic-ui.entity-picker :as entity-picker]
     [com.fulcrologic.rad.rendering.semantic-ui.report :as sui-report]
     [com.fulcrologic.rad.rendering.semantic-ui.boolean-field :as boolean-field]
@@ -60,6 +61,9 @@
    :com.fulcrologic.rad.report/row-style->row-layout
    {:default sui-report/render-table-row
     :list    sui-report/render-list-row}
+
+   :com.fulcrologic.rad.container/style->layout
+   {:default sui-container/render-container-layout}
 
    :com.fulcrologic.rad.control/type->style->control
    {:boolean {:toggle  boolean-input/render-control

@@ -56,20 +56,20 @@
                            (onChange instant))))}
           disabled? (assoc :readOnly true))))))
 
-(defn date-time-control [report-env]
-  (control/ui-control (assoc report-env :input-factory ui-date-time-instant-input)))
+(defn date-time-control [render-env]
+  (control/ui-control (assoc render-env :input-factory ui-date-time-instant-input)))
 
-(defn midnight-on-date-control [report-env]
-  (control/ui-control (assoc report-env
+(defn midnight-on-date-control [render-env]
+  (control/ui-control (assoc render-env
                         :input-factory ui-date-instant-input
                         ::default-local-time lt/midnight)))
 
-(defn midnight-next-date-control [report-env]
-  (control/ui-control (assoc report-env
+(defn midnight-next-date-control [render-env]
+  (control/ui-control (assoc render-env
                         :input-factory ui-ending-date-instant-input)))
 
-(defn date-at-noon-control [report-env]
-  (control/ui-control (assoc report-env
+(defn date-at-noon-control [render-env]
+  (control/ui-control (assoc render-env
                         ::default-local-time lt/noon
                         :input-factory ui-date-instant-input)))
 

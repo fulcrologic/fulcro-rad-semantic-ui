@@ -32,7 +32,7 @@
                              (when action
                                (action report-instance row-props)
                                (when reload?
-                                 (report/reload! report-instance))))}
+                                 (control/run! report-instance))))}
                 (?! label report-instance row-props))))
           row-actions)))))
 
@@ -106,7 +106,8 @@
 (comp/defsc StandardReportControls [this {:keys [report-instance] :as env}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
   (let [{:keys [::control/controls ::control/control-layout ::report/paginate?]} (comp/component-options report-instance)
-        {:keys [action-buttons inputs]} (or control-layout (comp/component-options report-instance ::report/control-layout))]
+        {:keys [action-buttons inputs]} (or control-layout (comp/component-options report-instance ::report/control-layout))
+        {:com.fulcrologic.rad.container/keys [controlled?]} (comp/get-computed report-instance)]
     (let [action-buttons (or action-buttons
                            (keep (fn [[k v]] (when (= :button (:type v)) k)) controls))
           inputs         (or inputs
@@ -118,14 +119,18 @@
           (dom/h3 :.ui.header
             (or (some-> report-instance comp/component-options ::report/title (?! report-instance)) "Report")
             (div :.ui.right.floated.buttons
-              (keep (fn [k] (report/render-control report-instance k))
+              (keep (fn [k]
+                      (let [control (get controls k)]
+                        (when (or (not controlled?) (:local? control))
+                          (control/render-control report-instance k control))))
                 action-buttons)))
           (div :.ui.form
             (map-indexed
               (fn [idx row]
                 (div {:key idx :className (sui-form/n-fields-string (count row))}
-                  (keep #(when (get controls %)
-                           (report/render-control report-instance %)) row)))
+                  (keep #(let [control (get controls %)]
+                           (when (or (not controlled?) (:local? control))
+                             (control/render-control report-instance % control))) row)))
               inputs))
           (when paginate?
             (let [page-count (report/page-count report-instance)]
@@ -223,7 +228,7 @@
 
 (defn render-rotated-table [_ {:keys [report-instance] :as env}]
   (let [{report-column-headings ::report/column-headings
-         ::report/keys          [columns row-actions BodyItem compare-rows table-class]} (comp/component-options report-instance)
+         ::report/keys          [columns row-actions compare-rows table-class]} (comp/component-options report-instance)
         props            (comp/props report-instance)
         sort-params      (-> props :ui/parameters ::report/sort)
         sortable?        (if-not (boolean compare-rows)
@@ -291,6 +296,7 @@
         rotate?         (?! rotate? report-instance)
         render-controls (report/control-renderer report-instance)
         loading?        (report/loading? report-instance)
+        controlled?     (comp/get-computed report-instance :com.fulcrologic.rad.container/controlled?)
         props           (comp/props report-instance)
         busy?           (:ui/busy? props)]
     (div
