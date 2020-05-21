@@ -24,3 +24,5 @@ target
 DevelopersGuide.html
 docs/assets
 docs/.asciidoctor
+pom.xml.releaseBackup
+release.properties
