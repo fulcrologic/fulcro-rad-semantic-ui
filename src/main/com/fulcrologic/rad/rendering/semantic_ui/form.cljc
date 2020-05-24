@@ -24,15 +24,14 @@
          ::form/keys       [ui title can-delete? can-add? added-via-upload?]} (get subforms k)
         form-instance-props (comp/props form-instance)
         read-only?          (form/read-only? form-instance attr)
-        can-add?            (if read-only? false can-add?)
-        can-delete?         (fn [item] (and (not read-only?) (?! can-delete? form-instance-props item)))
+        add?                (if read-only? false (?! can-add? form-instance attr))
+        delete?             (fn [item] (and (not read-only?) (?! can-delete? form-instance item)))
         items               (get form-instance-props k)
         title               (?! (or title (some-> ui (comp/component-options ::form/title)) "") form-instance form-instance-props)
         invalid?            (validation/invalid-attribute-value? env attr)
         validation-message  (validation/validation-error-message env attr)
-        add                 (when (or (nil? can-add?) (?! can-add? form-instance-props))
-                              (let [add?  (?! can-add? form-instance-props)
-                                    order (if (keyword? add?) add? :append)]
+        add                 (when (or (nil? add?) add?)
+                              (let [order (if (keyword? add?) add? :append)]
                                 (if (?! added-via-upload? env)
                                   (dom/input {:type     "file"
                                               :onChange (fn [evt]
@@ -73,7 +72,7 @@
                   env
                   {::form/parent          form-instance
                    ::form/parent-relation k
-                   ::form/can-delete?     (if can-delete? (?! can-delete?) false)})))
+                   ::form/can-delete?     (if delete? (delete? props) false)})))
             items))
         (div :.ui.message "None."))
       (when (= :bottom add-position) add))))
@@ -89,9 +88,8 @@
         std-props          {::form/nested?         true
                             ::form/parent          form-instance
                             ::form/parent-relation k
-                            ::form/can-delete?     (if can-delete?
-                                                     ;; for a to-one, the parent is the same form instance
-                                                     (partial can-delete? form-props)
+                            ::form/can-delete?     (or
+                                                     (?! can-delete? form-instance form-props)
                                                      false)}]
     (cond
       props
@@ -115,7 +113,7 @@
     (render-to-one env attr options)))
 
 (defn render-single-file [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
-  (let [{::form/keys [ui can-delete? title pick-one label] :as subform-options} (get subforms k)
+  (let [{::form/keys [ui can-delete?]} (get subforms k)
         parent     (comp/props form-instance)
         form-props (comp/props form-instance)
         props      (get form-props k)
@@ -125,7 +123,7 @@
                     ::form/parent          form-instance
                     ::form/parent-relation k
                     ::form/can-delete?     (if can-delete?
-                                             (partial can-delete? parent)
+                                             (can-delete? parent props)
                                              false)}]
     (if props
       (div :.field {:key (str k)}
@@ -144,14 +142,14 @@
         read-only?          (or
                               (form/read-only? master-form attr)
                               (form/read-only? form-instance attr))
-        can-add?            (if read-only? false (?! can-add? form-instance attr))
-        can-delete?         (if read-only? false (fn [item] (?! can-delete? form-instance-props item)))
+        add?                (if read-only? false (?! can-add? form-instance attr))
+        delete?             (if read-only? false (fn [item] (?! can-delete? form-instance item)))
         items               (-> form-instance comp/props k
                               (cond->
                                 sort-children sort-children))
         title               (?! (or title (some-> ui (comp/component-options ::form/title)) "") form-instance form-instance-props)
         upload-id           (str k "-file-upload")
-        add                 (when (or (nil? can-add?) (?! can-add? form-instance-props))
+        add                 (when (or (nil? add?) add?)
                               (dom/div
                                 (dom/label :.ui.green.button {:htmlFor upload-id}
                                   (dom/i :.ui.plus.icon)
@@ -192,7 +190,7 @@
                   env
                   {::form/parent          form-instance
                    ::form/parent-relation k
-                   ::form/can-delete?     (if can-delete? (?! can-delete?) false)})))
+                   ::form/can-delete?     (if delete? (?! delete? props) false)})))
             items))
         (div :.ui.message
           "None"))
@@ -310,13 +308,13 @@
         (div :.ui.form {:classes [(when invalid? "error")]
                         :key     (str (comp/get-ident form-instance))}
           (when can-delete?
-            (button :.ui.icon.primary.right.floated.button {:disabled (not (?! can-delete? props))
+            (button :.ui.icon.primary.right.floated.button {:disabled (not can-delete?)
                                                             :onClick  (fn []
                                                                         (form/delete-child! env))}
               (i :.times.icon)))
           (render-fields env)))
       (let [{::form/keys [title action-buttons controls]} (comp/component-options form-instance)
-            title (?! title form-instance props)
+            title          (?! title form-instance props)
             action-buttons (if action-buttons action-buttons form/standard-action-buttons)]
         (div :.ui.container {:key (str (comp/get-ident form-instance))}
           (div :.ui.top.attached.segment
