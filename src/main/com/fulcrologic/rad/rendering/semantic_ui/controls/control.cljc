@@ -12,8 +12,7 @@
 
 (defsc Control [_ {:keys [instance control control-key input-factory] :as report-env}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
-  (let [{:keys [:com.fulcrologic.rad.control/controls]} (comp/component-options instance)
-        props (comp/props instance)
+  (let [controls (control/component-controls instance)
         {:keys [label onChange disabled? visible? user-props] :as control} (get controls control-key control)]
     (if (and input-factory control)
       (let [label     (or (?! label instance))

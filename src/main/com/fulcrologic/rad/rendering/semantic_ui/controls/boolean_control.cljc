@@ -11,9 +11,9 @@
 
 (defsc BooleanControl [_ {:keys [instance control-key]}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
-  (let [{:keys [:com.fulcrologic.rad.control/controls]} (comp/component-options instance)
+  (let [controls (control/component-controls instance)
         {:keys [label onChange disabled? visible?] :as control} (get controls control-key)]
-    (when control
+    (if control
       (let [label     (or (?! label instance))
             disabled? (?! disabled? instance)
             visible?  (or (nil? visible?) (?! visible? instance))
@@ -28,6 +28,7 @@
                                       (when onChange
                                         (onChange instance (not value))))
                           :checked  (boolean value)})
-              (dom/label label))))))))
+              (dom/label label)))))
+      (log/error "Could not find control definition for " control-key))))
 
 (def render-control (comp/factory BooleanControl {:keyfn :control-key}))

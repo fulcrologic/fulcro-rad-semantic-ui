@@ -13,15 +13,15 @@
   {:shouldComponentUpdate (fn [_ _ _] true)
    :componentDidMount     (fn [this]
                             (let [{:keys [instance control-key] :as props} (comp/props this)
-                                  {:keys [:com.fulcrologic.rad.control/controls]} (comp/component-options instance)
+                                  controls (control/component-controls instance)
                                   {::po/keys [query-key] :as picker-options} (get controls control-key)]
                               (when query-key
                                 (po/load-picker-options! instance (comp/react-type instance) props picker-options))))}
-  (let [{:keys [:com.fulcrologic.rad.control/controls]} (comp/component-options instance)
-        props   (comp/props instance)
+  (let [controls (control/component-controls instance)
+        props    (comp/props instance)
         {::po/keys [query-key cache-key]
          :keys     [label onChange disabled? visible? action placeholder options user-props] :as control} (get controls control-key)
-        options (or options (get-in props [::po/options-cache (or cache-key query-key) :options]))]
+        options  (or options (get-in props [::po/options-cache (or cache-key query-key) :options]))]
     (when control
       (let [label       (or (?! label instance))
             disabled?   (?! disabled? instance)

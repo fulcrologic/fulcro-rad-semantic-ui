@@ -3,14 +3,15 @@
     [com.fulcrologic.rad.report :as report]
     [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.fulcro.data-fetch :as df]
+    [com.fulcrologic.rad.control :as control]
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom]
        :clj  [com.fulcrologic.fulcro.dom-server :as dom])
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]))
 
 (defsc ActionButton [_ {:keys [instance control-key]}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
-  (let [{:keys [:com.fulcrologic.rad.control/controls]} (comp/component-options instance)
-        props (comp/props instance)
+  (let [controls (control/component-controls instance)
+        props    (comp/props instance)
         {:keys [label icon class action disabled? visible?] :as control} (get controls control-key)]
     (when control
       (let [label     (?! label instance)

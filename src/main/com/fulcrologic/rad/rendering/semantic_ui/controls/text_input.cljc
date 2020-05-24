@@ -11,8 +11,8 @@
 
 (defsc TextControl [this {:keys [instance control-key]}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
-  (let [{:keys [:com.fulcrologic.rad.control/controls]} (comp/component-options instance)
-        props (comp/props instance)
+  (let [controls (control/component-controls instance)
+        props    (comp/props instance)
         {:keys [label onChange icon placeholder disabled? visible?] :as control} (get controls control-key)]
     (when control
       (let [label       (?! label instance)
