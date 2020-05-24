@@ -13,32 +13,21 @@
 
 (comp/defsc StandardContainerControls [_ {:keys [instance]}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
-  (let [{:keys [::control/controls ::control/control-layout]} (comp/component-options instance)
-        {:keys [action-buttons inputs]} control-layout]
-    (let [controls       (merge (container/shared-controls instance) controls)
-          action-buttons (or action-buttons
-                           (keep (fn [[k v]] (when (and
-                                                     (not (:local? v))
-                                                     (= :button (:type v))) k)) controls))
-          inputs         (or inputs
-                           (vector (into [] (keep
-                                              (fn [[k v]] (when-not (or
-                                                                      (:local? v)
-                                                                      (= :button (:type v))) k))
-                                              controls))))]
-      (div :.ui.top.attached.compact.basic.segment
-        (dom/h3 :.ui.header
-          (or (some-> instance comp/component-options ::container/title (?! instance)) "")
-          (div :.ui.right.floated.buttons
-            (keep (fn [k] (control/render-control instance k (get controls k))) action-buttons)))
-        (div :.ui.form
-          (map-indexed
-            (fn [idx row]
-              (div {:key idx :className (sui-form/n-fields-string (count row))}
-                (map #(if-let [c (get controls %)]
-                        (control/render-control instance % c)
-                        (dom/div :.ui.field {:key (str %)} "")) row)))
-            inputs))))))
+  (let [controls (control/component-controls instance)
+        {:keys [input-layout action-layout]} (control/standard-control-layout instance)]
+    (div :.ui.top.attached.compact.basic.segment
+      (dom/h3 :.ui.header
+        (or (some-> instance comp/component-options ::container/title (?! instance)) "")
+        (div :.ui.right.floated.buttons
+          (keep (fn [k] (control/render-control instance k (get controls k))) action-layout)))
+      (div :.ui.form
+        (map-indexed
+          (fn [idx row]
+            (div {:key idx :className (sui-form/n-fields-string (count row))}
+              (map #(if-let [c (get controls %)]
+                      (control/render-control instance % c)
+                      (dom/div :.ui.field {:key (str %)} "")) row)))
+          input-layout)))))
 
 (let [ui-standard-container-controls (comp/factory StandardContainerControls)]
   (defn render-standard-controls [instance]

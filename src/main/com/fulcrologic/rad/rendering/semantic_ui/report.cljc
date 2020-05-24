@@ -105,45 +105,40 @@
 
 (comp/defsc StandardReportControls [this {:keys [report-instance] :as env}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
-  (let [{:keys [::control/controls ::control/control-layout ::report/paginate?]} (comp/component-options report-instance)
-        {:keys [action-buttons inputs]} (or control-layout (comp/component-options report-instance ::report/control-layout))
+  (let [controls (control/component-controls report-instance)
+        {:keys [::report/paginate?]} (comp/component-options report-instance)
+        {:keys [input-layout action-layout]} (control/standard-control-layout report-instance)
         {:com.fulcrologic.rad.container/keys [controlled?]} (comp/get-computed report-instance)]
-    (let [action-buttons (or action-buttons
-                           (keep (fn [[k v]] (when (= :button (:type v)) k)) controls))
-          inputs         (or inputs
-                           (vector (into [] (keep
-                                              (fn [[k v]] (when-not (= :button (:type v)) k))
-                                              controls))))]
-      (comp/fragment
-        (div :.ui.top.attached.compact.segment
-          (dom/h3 :.ui.header
-            (or (some-> report-instance comp/component-options ::report/title (?! report-instance)) "Report")
-            (div :.ui.right.floated.buttons
-              (keep (fn [k]
-                      (let [control (get controls k)]
-                        (when (or (not controlled?) (:local? control))
-                          (control/render-control report-instance k control))))
-                action-buttons)))
-          (div :.ui.form
-            (map-indexed
-              (fn [idx row]
-                (div {:key idx :className (sui-form/n-fields-string (count row))}
-                  (keep #(let [control (get controls %)]
-                           (when (or (not controlled?) (:local? control))
-                             (control/render-control report-instance % control))) row)))
-              inputs))
-          (when paginate?
-            (let [page-count (report/page-count report-instance)]
-              (when (> page-count 1)
-                (div :.ui.two.column.centered.grid
-                  (div :.column
-                    (div {:style {:paddingTop "4px"}}
-                      #?(:cljs
-                         (sui-pagination/ui-pagination {:activePage   (report/current-page report-instance)
-                                                        :onPageChange (fn [_ data]
-                                                                        (report/goto-page! report-instance (comp/isoget data "activePage")))
-                                                        :totalPages   page-count
-                                                        :size         "tiny"})))))))))))))
+    (comp/fragment
+      (div :.ui.top.attached.compact.segment
+        (dom/h3 :.ui.header
+          (or (some-> report-instance comp/component-options ::report/title (?! report-instance)) "Report")
+          (div :.ui.right.floated.buttons
+            (keep (fn [k]
+                    (let [control (get controls k)]
+                      (when (or (not controlled?) (:local? control))
+                        (control/render-control report-instance k control))))
+              action-layout)))
+        (div :.ui.form
+          (map-indexed
+            (fn [idx row]
+              (div {:key idx :className (sui-form/n-fields-string (count row))}
+                (keep #(let [control (get controls %)]
+                         (when (or (not controlled?) (:local? control))
+                           (control/render-control report-instance % control))) row)))
+            input-layout))
+        (when paginate?
+          (let [page-count (report/page-count report-instance)]
+            (when (> page-count 1)
+              (div :.ui.two.column.centered.grid
+                (div :.column
+                  (div {:style {:paddingTop "4px"}}
+                    #?(:cljs
+                       (sui-pagination/ui-pagination {:activePage   (report/current-page report-instance)
+                                                      :onPageChange (fn [_ data]
+                                                                      (report/goto-page! report-instance (comp/isoget data "activePage")))
+                                                      :totalPages   page-count
+                                                      :size         "tiny"}))))))))))))
 
 (let [ui-standard-report-controls (comp/factory StandardReportControls)]
   (defn render-standard-controls [report-instance]
