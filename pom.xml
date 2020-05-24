@@ -71,7 +71,7 @@
         <dependency>
             <groupId>com.fulcrologic</groupId>
             <artifactId>fulcro-rad</artifactId>
-      <version>0.0.7-alpha</version>
+      <version>0.0.9-alpha</version>
         </dependency>
         <dependency>
             <groupId>com.fulcrologic</groupId>

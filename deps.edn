@@ -1,6 +1,6 @@
 {:paths ["src/main"]
 
- :deps  {com.fulcrologic/fulcro-rad          {:mvn/version "0.0.7-alpha"}
+ :deps  {com.fulcrologic/fulcro-rad          {:mvn/version "0.0.9-alpha"}
          com.fulcrologic/fulcro-i18n         {:mvn/version "0.0.3-alpha"}
          com.fulcrologic/semantic-ui-wrapper {:mvn/version "1.0.1"}
 
