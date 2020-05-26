@@ -28,7 +28,7 @@
   instants that can be used for a proper non-inclusive end date."
   [_ {:keys [value onChange] :as props}]
   (let [today        (dt/inst->local-datetime (or value (dt/now)))
-        display-date (ldt/to-local-date (ldt/minus-minutes today 1))
+        display-date (ldt/to-local-date (ldt/minus-days today 1))
         value        (dt/local-date->html-date-string display-date)]
     (dom/input
       (merge props
