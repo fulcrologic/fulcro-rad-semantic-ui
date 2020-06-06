@@ -36,6 +36,7 @@
     :enum    {:default      enumerated-field/render-field
               :autocomplete autocomplete/render-autocomplete-field}
     :string  {:default                              text-field/render-field
+              :multi-line                           text-field/render-multi-line
               :autocomplete                         autocomplete/render-autocomplete-field
               :viewable-password                    text-field/render-viewable-password
               :password                             text-field/render-password
