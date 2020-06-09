@@ -1,7 +1,7 @@
 (ns com.fulcrologic.rad.rendering.semantic-ui.text-field
   (:require
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
-    #?(:cljs [com.fulcrologic.fulcro.dom :refer [div label input]]
+    #?(:cljs [com.fulcrologic.fulcro.dom :refer [div label input textarea]]
        :clj  [com.fulcrologic.fulcro.dom-server :refer [div label input]])
     [com.fulcrologic.fulcro.dom.events :as evt]
     [com.fulcrologic.rad.form :as form]
@@ -66,3 +66,13 @@
            :onChange  (fn [v] (form/input-changed! env k v))}
           input-props)))))
 
+(def render-multi-line
+  (render-field-factory (fn [{:keys [value onChange onBlur] :as props}]
+                          (textarea (assoc props
+                                      :value (or value "")
+                                      :onBlur (fn [evt]
+                                                (when onBlur
+                                                  (onBlur (evt/target-value evt))))
+                                      :onChange (fn [evt]
+                                                  (when onChange
+                                                    (onChange (evt/target-value evt)))))))))
