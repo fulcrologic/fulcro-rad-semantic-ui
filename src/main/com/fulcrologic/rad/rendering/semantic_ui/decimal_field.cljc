@@ -8,7 +8,7 @@
 
 (def ui-decimal-input
   (comp/factory (inputs/StringBufferedInput ::DecimalInput
-                  {:model->string (fn [n] (if (math/numeric? n) (math/numeric->str n) ""))
+                  {:model->string (fn [n] (math/numeric->str n))
                    :string->model (fn [s] (math/numeric s))
                    :string-filter (fn [s] (str/replace s #"[^\d.]" ""))})))
 
