@@ -18,7 +18,8 @@
     [com.fulcrologic.rad.rendering.semantic-ui.enumerated-field :as enumerated-field]
     [com.fulcrologic.rad.rendering.semantic-ui.blob-field :as blob-field]
     [com.fulcrologic.rad.rendering.semantic-ui.autocomplete :as autocomplete]
-    [com.fulcrologic.rad.rendering.semantic-ui.text-field :as text-field]))
+    [com.fulcrologic.rad.rendering.semantic-ui.text-field :as text-field]
+    [com.fulcrologic.rad.rendering.semantic-ui.currency-field :as currency-field]))
 
 (def all-controls
   {;; Form-related UI
@@ -44,7 +45,8 @@
               :com.fulcrologic.rad.blob/file-upload blob-field/render-file-upload}
     :int     {:default int-field/render-field}
     :long    {:default int-field/render-field}
-    :decimal {:default decimal-field/render-field}
+    :decimal {:default decimal-field/render-field
+              :USD     currency-field/render-field}
     :boolean {:default boolean-field/render-field}
     :instant {:default      instant/render-field
               :date-at-noon instant/render-date-at-noon-field}
