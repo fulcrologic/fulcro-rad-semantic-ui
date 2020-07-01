@@ -13,7 +13,7 @@
 (defsc Control [_ {:keys [instance control control-key input-factory] :as report-env}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
   (let [controls (control/component-controls instance)
-        {:keys [label onChange disabled? visible? user-props] :as control} (get controls control-key control)]
+        {:keys [label onChange action disabled? visible? user-props] :as control} (get controls control-key control)]
     (if (and input-factory control)
       (let [label     (or (?! label instance))
             disabled? (?! disabled? instance)
@@ -22,7 +22,9 @@
             onChange  (fn [new-value]
                         (control/set-parameter! instance control-key new-value)
                         (when onChange
-                          (onChange instance new-value)))]
+                          (onChange instance new-value))
+                        (when action
+                          (action instance)))]
         (when visible?
           (dom/div :.ui.field {:key (str control-key)}
             (dom/label label)
