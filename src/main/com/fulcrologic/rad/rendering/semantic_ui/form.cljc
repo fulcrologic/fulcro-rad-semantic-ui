@@ -7,7 +7,6 @@
     [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.rad.blob :as blob]
     [com.fulcrologic.fulcro.dom.events :as evt]
-    [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     [com.fulcrologic.fulcro.application :as app]
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom :refer [div h3 button i span]]
@@ -323,7 +322,7 @@
               (div :.ui.right.floated.buttons
                 (keep #(control/render-control master-form %) action-buttons))))
           (div :.ui.attached.form {:classes [(when invalid? "error")]}
-            (div :.ui.error.message (tr "The form has errors and cannot be saved."))
+            (div :.ui.error.message "The form has errors and cannot be saved.")
             (div :.ui.attached.segment
               (render-fields env))))))))
 
