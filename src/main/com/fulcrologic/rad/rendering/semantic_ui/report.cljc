@@ -23,7 +23,6 @@
       (div :.ui.buttons
         (map-indexed
           (fn [idx {:keys [label reload? visible? disabled? action classes] :as props}]
-          (log/info "Rendering button with props:" props)
             (when (or (nil? visible?) (?! visible? report-instance row-props))
               (dom/button :.ui.button
                 {:key      idx
