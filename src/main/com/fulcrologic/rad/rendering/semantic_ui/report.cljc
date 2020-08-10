@@ -22,10 +22,11 @@
     (when (seq row-actions)
       (div :.ui.buttons
         (map-indexed
-          (fn [idx {:keys [label reload? visible? disabled? action]}]
+          (fn [idx {:keys [label reload? visible? disabled? action classes]}]
             (when (or (nil? visible?) (?! visible? report-instance row-props))
               (dom/button :.ui.button
                 {:key      idx
+                 :classes  (into [] classes)
                  :disabled (boolean (?! disabled? report-instance row-props))
                  :onClick  (fn [evt]
                              (evt/stop-propagation! evt)
