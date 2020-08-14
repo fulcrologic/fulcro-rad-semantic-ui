@@ -20,6 +20,7 @@
      (let [props              (comp/props form-instance)
            value              (or (form/computed-value env attribute)
                                 (and attribute (get props qualified-key)))
+           addl-props         (merge (form/field-style-config env attribute :input/props) addl-props)
            invalid?           (validation/invalid-attribute-value? env attribute)
            validation-message (when invalid? (validation/validation-error-message env attribute))
            user-props         (form/field-style-config env attribute :input/props)
