@@ -21,20 +21,21 @@
   (let [{::report/keys [row-actions]} (comp/component-options report-instance)]
     (when (seq row-actions)
       (div :.ui.buttons
-        (map-indexed
-          (fn [idx {:keys [label reload? visible? disabled? action]}]
-            (when (or (nil? visible?) (?! visible? report-instance row-props))
-              (dom/button :.ui.button
-                {:key      idx
-                 :disabled (boolean (?! disabled? report-instance row-props))
-                 :onClick  (fn [evt]
-                             (evt/stop-propagation! evt)
-                             (when action
-                               (action report-instance row-props)
-                               (when reload?
-                                 (control/run! report-instance))))}
-                (?! label report-instance row-props))))
-          row-actions)))))
+           (map-indexed
+             (fn [idx {:keys [label reload? visible? disabled? action class-name]}]
+               (when (or (nil? visible?) (?! visible? report-instance row-props))
+                 (dom/button :.ui.button
+                             (merge {:key      idx
+                                     :disabled (boolean (?! disabled? report-instance row-props))
+                                     :onClick  (fn [evt]
+                                                 (evt/stop-propagation! evt)
+                                                 (when action
+                                                   (action report-instance row-props)
+                                                   (when reload?
+                                                     (control/run! report-instance))))}
+                                    (when class-name {:className class-name}))
+                             (?! label report-instance row-props))))
+             row-actions)))))
 
 (comp/defsc TableRowLayout [_ {:keys [report-instance props] :as rp}]
   {}
@@ -306,5 +307,3 @@
 (let [ui-table-report-layout (comp/factory TableReportLayout {:keyfn ::report/idx})]
   (defn render-table-report-layout [this]
     (ui-table-report-layout {:report-instance this})))
-
-
