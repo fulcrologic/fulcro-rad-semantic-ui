@@ -22,7 +22,11 @@
     (when (seq row-actions)
       (div :.ui.buttons
            (map-indexed
+<<<<<<< HEAD
              (fn [idx {:keys [label reload? visible? disabled? action class-name]}]
+=======
+             (fn [idx {:keys [label reload? visible? disabled? action class-name icon-class-name]}]
+>>>>>>> b240191... add :class-name (:className) and :icon-class-name option for row-actions
                (when (or (nil? visible?) (?! visible? report-instance row-props))
                  (dom/button :.ui.button
                              (merge {:key      idx
@@ -34,7 +38,13 @@
                                                    (when reload?
                                                      (control/run! report-instance))))}
                                     (when class-name {:className class-name}))
+<<<<<<< HEAD
                              (?! label report-instance row-props))))
+=======
+                             (when label (?! label report-instance row-props))
+                             (when icon-class-name
+                               (dom/i {:className icon-class-name})))))
+>>>>>>> b240191... add :class-name (:className) and :icon-class-name option for row-actions
              row-actions)))))
 
 (comp/defsc TableRowLayout [_ {:keys [report-instance props] :as rp}]
