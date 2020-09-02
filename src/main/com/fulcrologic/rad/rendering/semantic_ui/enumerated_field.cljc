@@ -26,11 +26,11 @@
                :value k}) enumerated-values))))
 
 (defn- render-to-many [{::form/keys [form-instance] :as env} {::form/keys [field-label]
-                                                              ::attr/keys [qualified-key] :as attribute}]
+                                                              ::attr/keys [qualified-key computed-options] :as attribute}]
   (when (form/field-visible? form-instance attribute)
     (let [props        (comp/props form-instance)
           read-only?   (form/read-only? form-instance attribute)
-          options      (enumerated-options env attribute)
+          options      (or (?! computed-options env) (enumerated-options env attribute))
           selected-ids (set (get props qualified-key))]
       (div :.ui.field {:key (str qualified-key)}
         (label (or field-label (some-> qualified-key name str/capitalize)))
@@ -52,13 +52,13 @@
             options))))))
 
 (defn- render-to-one [{::form/keys [form-instance] :as env} {::form/keys [field-label]
-                                                             ::attr/keys [qualified-key] :as attribute}]
+                                                             ::attr/keys [qualified-key computed-options] :as attribute}]
   (when (form/field-visible? form-instance attribute)
     (let [props      (comp/props form-instance)
           read-only? (form/read-only? form-instance attribute)
           invalid?   (validation/invalid-attribute-value? env attribute)
           user-props (form/field-style-config env attribute :input/props)
-          options    (enumerated-options env attribute)
+          options    (or (?! computed-options env) (enumerated-options env attribute))
           value      (get props qualified-key)]
       (div :.ui.field {:key (str qualified-key) :classes [(when invalid? "error")]}
         (label (str (or field-label (some-> qualified-key name str/capitalize))

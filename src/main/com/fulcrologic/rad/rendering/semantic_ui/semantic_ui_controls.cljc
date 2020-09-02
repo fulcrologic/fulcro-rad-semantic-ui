@@ -37,18 +37,22 @@
     :enum    {:default      enumerated-field/render-field
               :autocomplete autocomplete/render-autocomplete-field}
     :string  {:default                              text-field/render-field
+              :picker                               enumerated-field/render-field
               :multi-line                           text-field/render-multi-line
               :autocomplete                         autocomplete/render-autocomplete-field
               :viewable-password                    text-field/render-viewable-password
               :password                             text-field/render-password
               :sorted-set                           text-field/render-dropdown
               :com.fulcrologic.rad.blob/file-upload blob-field/render-file-upload}
-    :int     {:default int-field/render-field}
-    :long    {:default int-field/render-field}
+    :int     {:default int-field/render-field
+              :picker  enumerated-field/render-field}
+    :long    {:default int-field/render-field
+              :picker  enumerated-field/render-field}
     :decimal {:default decimal-field/render-field
               :USD     currency-field/render-field}
     :boolean {:default boolean-field/render-field}
     :instant {:default      instant/render-field
+              :picker       enumerated-field/render-field
               :date-at-noon instant/render-date-at-noon-field}
     :ref     {:pick-one  entity-picker/to-one-picker
               :pick-many entity-picker/to-many-picker}}
