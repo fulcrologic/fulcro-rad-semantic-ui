@@ -61,7 +61,7 @@
           options    (or (?! computed-options env) (enumerated-options env attribute))
           value      (get props qualified-key)]
       (div :.ui.field {:key (str qualified-key) :classes [(when invalid? "error")]}
-        (label (str (or field-label (some-> qualified-key name str/capitalize))
+        (label (str (or (?! field-label form-instance) (some-> qualified-key name str/capitalize))
                  (when invalid? " (Required)")))
         (if read-only?
           (let [value (first (filter #(= value (:value %)) options))]
