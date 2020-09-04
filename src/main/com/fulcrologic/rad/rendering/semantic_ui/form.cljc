@@ -78,7 +78,7 @@
       (when (= :bottom add-position) add))))
 
 (defn render-to-one [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
-  (let [{::form/keys [ui can-delete? title ref-container-class]} (get subforms k)
+  (let [{::form/keys [ui can-add? can-delete? title ref-container-class]} (get subforms k)
         form-props         (comp/props form-instance)
         props              (get form-props k)
         title              (?! (or title (some-> ui (comp/component-options ::form/title)) "") form-instance form-props)
@@ -99,13 +99,13 @@
           (div :.ui.error.message validation-message))
         (ui-factory props (merge env std-props)))
 
-      :else
+      (or (nil? can-add?) (?! can-add? form-instance attr))
       (div {:key (str k) :classes [(?! ref-container-class env)]}
         (h3 :.ui.header title)
-        (button {:onClick (fn [] (form/add-child! (assoc env
-                                                    ::form/parent-relation k
-                                                    ::form/parent form-instance
-                                                    ::form/child-class ui)))} "Create")))))
+        (button :.ui.primary.button {:onClick (fn [] (form/add-child! (assoc env
+                                                                        ::form/parent-relation k
+                                                                        ::form/parent form-instance
+                                                                        ::form/child-class ui)))} "Create")))))
 
 (defn standard-ref-container [env {::attr/keys [cardinality] :as attr} options]
   (if (= :many cardinality)
