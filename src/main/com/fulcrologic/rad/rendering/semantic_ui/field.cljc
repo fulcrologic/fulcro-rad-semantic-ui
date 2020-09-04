@@ -7,6 +7,7 @@
        :clj  [com.fulcrologic.fulcro.dom-server :refer [div label input span]])
     [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.fulcro.dom.html-entities :as ent]
+    [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.ui-validation :as validation]
     [taoensso.timbre :as log]))
@@ -20,10 +21,9 @@
      (let [props              (comp/props form-instance)
            value              (or (form/computed-value env attribute)
                                 (and attribute (get props qualified-key)))
-           addl-props         (merge (form/field-style-config env attribute :input/props) addl-props)
+           addl-props         (merge (?! (form/field-style-config env attribute :input/props) env) addl-props)
            invalid?           (validation/invalid-attribute-value? env attribute)
            validation-message (when invalid? (validation/validation-error-message env attribute))
-           user-props         (form/field-style-config env attribute :input/props)
            field-label        (form/field-label env attribute)
            visible?           (form/field-visible? form-instance attribute)
            read-only?         (form/read-only? form-instance attribute)
@@ -34,12 +34,13 @@
            (label
              (or field-label (some-> qualified-key name str/capitalize))
              (when validation-message (str ent/nbsp "(" validation-message ")")))
-           (div :.ui.input {:classes [(when read-only? "transparent")]}
+           (div :.ui.input
              (input-factory (merge addl-props
-                              {:value    value
-                               :onBlur   (fn [v] (form/input-blur! env qualified-key v))
-                               :onChange (fn [v] (form/input-changed! env qualified-key v))}
-                              user-props)))
+                              (cond->
+                                {:value    value
+                                 :onBlur   (fn [v] (form/input-blur! env qualified-key v))
+                                 :onChange (fn [v] (form/input-changed! env qualified-key v))}
+                                read-only? (assoc :readonly "")))))
            #_(when validation-message
                (div :.ui.error.message
                  (str validation-message)))))))))

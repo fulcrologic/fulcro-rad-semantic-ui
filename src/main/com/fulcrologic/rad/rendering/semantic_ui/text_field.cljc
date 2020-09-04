@@ -7,6 +7,7 @@
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.rad.ui-validation :as validation]
+    [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
     [com.fulcrologic.rad.rendering.semantic-ui.field :refer [render-field-factory]]))
 
@@ -47,7 +48,7 @@
   (let [{k           ::attr/qualified-key
          ::attr/keys [required?]} attribute
         values             (form/field-style-config env attribute :sorted-set/valid-values)
-        input-props        (form/field-style-config env attribute :input/props)
+        input-props        (?! (form/field-style-config env attribute :input/props) env)
         options            (mapv (fn [v] {:text v :value v}) values)
         props              (comp/props form-instance)
         value              (and attribute (get props k))

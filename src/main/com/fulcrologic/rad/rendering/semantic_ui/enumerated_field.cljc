@@ -57,7 +57,7 @@
     (let [props      (comp/props form-instance)
           read-only? (form/read-only? form-instance attribute)
           invalid?   (validation/invalid-attribute-value? env attribute)
-          user-props (form/field-style-config env attribute :input/props)
+          user-props (?! (form/field-style-config env attribute :input/props) env)
           options    (or (?! computed-options env) (enumerated-options env attribute))
           value      (get props qualified-key)]
       (div :.ui.field {:key (str qualified-key) :classes [(when invalid? "error")]}
@@ -65,10 +65,10 @@
                  (when invalid? " (Required)")))
         (if read-only?
           (let [value (first (filter #(= value (:value %)) options))]
-            (:text value))
+            (dom/input {:readonly ""
+                        :value    (:text value)}))
           (ui-wrapped-dropdown (merge
-                                 {:disabled read-only?
-                                  :options  options
+                                 {:options  options
                                   :value    value
                                   :onChange (fn [v] (form/input-changed! env qualified-key v))}
                                  user-props)))))))
