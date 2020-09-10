@@ -64,7 +64,7 @@
         (div :.ui.error.message
           validation-message))
       (if (seq items)
-        (div {:class (or (?! ref-container-class env) "ui segments")}
+        (div {:className (or (?! ref-container-class env) "ui segments")}
           (mapv
             (fn [props]
               (ui-factory props
@@ -305,7 +305,7 @@
         (log/debug "Form " (comp/component-name form-instance) " valid? " valid?)
         (log/debug "Form " (comp/component-name form-instance) " dirty? " dirty?)))
     (if nested?
-      (div {:class (or (?! (comp/component-options form-instance ::ref-element-class) env) "ui segment")}
+      (div {:className (or (?! (comp/component-options form-instance ::ref-element-class) env) "ui segment")}
         (div :.ui.form {:classes [(when invalid? "error")]
                         :key     (str (comp/get-ident form-instance))}
           (when can-delete?
@@ -318,8 +318,8 @@
             title          (?! title form-instance props)
             action-buttons (if action-buttons action-buttons form/standard-action-buttons)]
         (div {:key   (str (comp/get-ident form-instance))
-              :class (or (?! (comp/component-options form-instance ::top-level-class) env) "ui container")}
-          (div {:class (or (?! (comp/component-options form-instance ::controls-class) env) "ui top attached segment")}
+              :className (or (?! (comp/component-options form-instance ::top-level-class) env) "ui container")}
+          (div {:className (or (?! (comp/component-options form-instance ::controls-class) env) "ui top attached segment")}
             (dom/h3 :.ui.header
               title
               (div :.ui.right.floated.buttons

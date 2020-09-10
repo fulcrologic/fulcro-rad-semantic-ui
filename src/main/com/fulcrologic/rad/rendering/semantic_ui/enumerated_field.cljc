@@ -65,7 +65,7 @@
                  (when invalid? " (Required)")))
         (if read-only?
           (let [value (first (filter #(= value (:value %)) options))]
-            (dom/input {:readonly ""
+            (dom/input {:readOnly ""
                         :value    (:text value)}))
           (ui-wrapped-dropdown (merge
                                  {:options  options

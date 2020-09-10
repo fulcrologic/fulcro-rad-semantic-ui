@@ -40,7 +40,7 @@
                                 {:value    value
                                  :onBlur   (fn [v] (form/input-blur! env qualified-key v))
                                  :onChange (fn [v] (form/input-changed! env qualified-key v))}
-                                read-only? (assoc :readonly "")))))
+                                read-only? (assoc :readOnly "")))))
            #_(when validation-message
                (div :.ui.error.message
                  (str validation-message)))))))))
