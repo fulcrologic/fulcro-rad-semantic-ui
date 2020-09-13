@@ -1,6 +1,15 @@
 = Fulcro RAD Semantic UI Rendering Plugin
 
-WARNING: This library is alpha.
+A rendering plugin for Fulcro RAD that can render forms, reports, and containers for web UI. It leverages
+https://fomantic-ui.com/introduction/getting-started.html[Semantic UI (Fomatic) CSS], which is easy to theme,
+and has support for advanced (and controllable) React-based controls via https://react.semantic-ui.com/[Semantic UI React].
+
+RAD UI plugins are meant to be an easy-to-escape first draft of UI. Most applications have a lot of back-end support
+interfaces where the UI does not have to be pixel perfect, it just has to work. As such, a RAD UI plugin can save you
+a lot of boilerplate and effort for screens that have little need for marketing appeal.
+
+NOTE: Do not expect these renderings to be ideal in all cases. Some controls may not align perfectly and such.
+Please feel free to submit PRs if you see a way to clean up a particular layout that is less than optimal.
 
 == Usage
 
@@ -17,6 +26,10 @@ To use this library simply install the controls on your RAD application:
 (defonce app (-> (rad-app/fulcro-rad-app)
                  (rad-app/install-ui-controls! sui/all-controls)))
 -----
+
+See the `fulcro-rad-demo` for a complete demo of most of the features of this library. Many of the
+features are covered in https://github.com/fulcrologic/fulcro-rad-demo[that demo] and
+in the http://book.fulcrologic.com/RAD.html[book].
 
 == LICENSE
 

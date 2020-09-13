@@ -18,10 +18,8 @@
                               (when query-key
                                 (po/load-picker-options! instance (comp/react-type instance) props picker-options))))}
   (let [controls (control/component-controls instance)
-        props    (comp/props instance)
-        {::po/keys [query-key cache-key]
-         :keys     [label onChange disabled? visible? action placeholder options user-props] :as control} (get controls control-key)
-        options  (or options (get-in props [::po/options-cache (or cache-key query-key) :options]))]
+        {:keys [label onChange disabled? visible? action placeholder options user-props] :as control} (get controls control-key)
+        options  (or options (po/current-picker-options instance control))]
     (when control
       (let [label       (or (?! label instance))
             disabled?   (?! disabled? instance)
