@@ -98,15 +98,15 @@
               (map (fn [{:keys [text value]}]
                      (let [checked? (contains? current-selection value)]
                        (div :.item {:key value})
-                       (div :.content {}
-                            (div :.ui.toggle.checkbox {:style {:marginTop "0"}}
-                                 (dom/input
-                                  {:type     "checkbox"
-                                   :checked  checked?
-                                   :onChange #(if-not checked?
-                                                (form/input-changed! env qualified-key (vec (conj current-selection value)))
-                                                (form/input-changed! env qualified-key (vec (disj current-selection value))))})
-                                 (dom/label text)))))
+                         (div :.content {}
+                           (div :.ui.toggle.checkbox {:style {:marginTop "0"}}
+                            (dom/input
+                             {:type     "checkbox"
+                              :checked  checked?
+                              :onChange #(if-not checked?
+                                           (form/input-changed! env qualified-key (vec (conj current-selection value)))
+                                           (form/input-changed! env qualified-key (vec (disj current-selection value))))})
+                            (dom/label text)))))
                 options))))))))
 
 (def ui-to-many-picker (comp/factory ToManyPicker {:keyfn :id}))
