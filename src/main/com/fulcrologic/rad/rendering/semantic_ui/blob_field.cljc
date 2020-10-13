@@ -6,6 +6,7 @@
                [com.fulcrologic.fulcro.networking.file-upload :as file-upload]]
         :clj  [[com.fulcrologic.fulcro.dom-server :as dom :refer [div input]]])
     [com.fulcrologic.rad.form :as form]
+    [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
     [com.fulcrologic.rad.attributes :as attr]
     [taoensso.timbre :as log]
     [com.fulcrologic.rad.ui-validation :as validation]
@@ -105,7 +106,7 @@
       (dom/label label)
       (cond
         (blob/blob-downloadable? props qualified-key)
-        (dom/a {:href (str url "?filename=" filename)} "Download")
+        (dom/a {:href (str url "?filename=" filename)} (tr "Download"))
 
         (blob/uploading? props qualified-key)
         (dom/div :.ui.small.blue.progress

@@ -1,5 +1,6 @@
 (ns com.fulcrologic.rad.rendering.semantic-ui.form
   (:require
+    [com.fulcrologic.fulcro-i18n.i18n :refer [tr trc]]
     [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.rad.options-util :refer [?! narrow-keyword]]
     [com.fulcrologic.rad.ui-validation :as validation]
@@ -35,7 +36,6 @@
                                 (if (?! added-via-upload? env)
                                   (dom/input {:type     "file"
                                               :onChange (fn [evt]
-                                                          (log/info "UPLOAD FILE!!!")
                                                           (let [new-id     (tempid/tempid)
                                                                 js-file    (-> evt blob/evt->js-files first)
                                                                 attributes (comp/component-options ui ::form/attributes)
@@ -105,7 +105,7 @@
         (button :.ui.primary.button {:onClick (fn [] (form/add-child! (assoc env
                                                                         ::form/parent-relation k
                                                                         ::form/parent form-instance
-                                                                        ::form/child-class ui)))} "Create")))))
+                                                                        ::form/child-class ui)))} (tr "Create"))))))
 
 (defn standard-ref-container [env {::attr/keys [cardinality] :as attr} options]
   (if (= :many cardinality)
@@ -130,7 +130,7 @@
         (dom/label label)
         (ui-factory props (merge env std-props)))
       (div {:key (str k)}
-        (div "Upload??? (TODO)")))))
+        (div (tr "Upload??? (TODO)"))))))
 
 (defsc ManyFiles [this {{::form/keys [form-instance master-form] :as env} :env
                         {k ::attr/qualified-key :as attr}                 :attribute
@@ -153,7 +153,7 @@
                               (dom/div
                                 (dom/label :.ui.green.button {:htmlFor upload-id}
                                   (dom/i :.ui.plus.icon)
-                                  "Add File")
+                                  (tr "Add File"))
                                 (dom/input {:type     "file"
                                             ;; trick: changing the key on change clears the input, so a failed upload can be retried
                                             :key      (comp/get-state this :input-key)
@@ -193,7 +193,7 @@
                    ::form/can-delete?     (if delete? (?! delete? props) false)})))
             items))
         (div :.ui.message
-          "None"))
+          (trc "there are no files in a list of uploads" "No files.")))
 
       (when (= :bottom add-position) add))))
 
@@ -317,7 +317,7 @@
       (let [{::form/keys [title action-buttons controls]} (comp/component-options form-instance)
             title          (?! title form-instance props)
             action-buttons (if action-buttons action-buttons form/standard-action-buttons)]
-        (div {:key   (str (comp/get-ident form-instance))
+        (div {:key       (str (comp/get-ident form-instance))
               :className (or (?! (comp/component-options form-instance ::top-level-class) env) "ui container")}
           (div {:className (or (?! (comp/component-options form-instance ::controls-class) env) "ui top attached segment")}
             (dom/h3 :.ui.header
@@ -326,7 +326,7 @@
                 (keep #(control/render-control master-form %) action-buttons))))
           (div {:classes [(or (?! (comp/component-options form-instance ::form-class) env) "ui attached form")
                           (when invalid? "error")]}
-            (div :.ui.error.message "The form has errors and cannot be saved.")
+            (div :.ui.error.message (tr "The form has errors and cannot be saved."))
             (div :.ui.attached.segment
               (render-fields env))))))))
 
@@ -374,7 +374,7 @@
         :href    (str url "?filename=" filename)
         :onClick (fn [evt]
                    #?(:cljs (when-not (or (not (blob/blob-downloadable? props sha-key))
-                                        (js/confirm "View/download?"))
+                                        (js/confirm (tr "View/download?")))
                               (evt/stop-propagation! evt)
                               (evt/prevent-default! evt))))}
        (dom/div :.ui.tiny.image
@@ -382,12 +382,12 @@
            (dom/i :.huge.skull.crossbones.icon)
            (dom/i :.huge.file.icon)))
        (div :.middle.aligned.content
-         (str filename (cond failed? " (Upload failed. Delete and try again.)"
-                             dirty? " (unsaved)")))
+         (str filename (cond failed? (str " (" (tr "Upload failed. Delete and try again.") ")")
+                             dirty? (str " (" (tr "unsaved") ")"))))
        (dom/button :.ui.red.icon.button {:onClick (fn [evt]
                                                     (evt/stop-propagation! evt)
                                                     (evt/prevent-default! evt)
-                                                    (when #?(:clj true :cljs (js/confirm "Permanently Delete File?"))
+                                                    (when #?(:clj true :cljs (js/confirm (tr "Permanently Delete File?")))
                                                       (form/delete-child! env)))}
          (dom/i :.times.icon))))))
 

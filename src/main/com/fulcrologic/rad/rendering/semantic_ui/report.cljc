@@ -1,5 +1,6 @@
 (ns com.fulcrologic.rad.rendering.semantic-ui.report
   (:require
+    [com.fulcrologic.fulcro-i18n.i18n :refer [tr trc]]
     [clojure.string :as str]
     [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.rad.report :as report]
@@ -112,7 +113,7 @@
     (comp/fragment
       (div :.ui.top.attached.compact.segment
         (dom/h3 :.ui.header
-          (or (some-> report-instance comp/component-options ::report/title (?! report-instance)) "Report")
+          (or (some-> report-instance comp/component-options ::report/title (?! report-instance)) (trc "a table that shows a list of rows" "Report"))
           (div :.ui.right.floated.buttons
             (keep (fn [k]
                     (let [control (get controls k)]

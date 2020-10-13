@@ -6,6 +6,7 @@
          [com.fulcrologic.semantic-ui.modules.dropdown.ui-dropdown :refer [ui-dropdown]]]
         :clj
         [[com.fulcrologic.fulcro.dom-server :as dom :refer [div label input]]])
+    [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
     [com.fulcrologic.rad.ui-validation :as validation]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     [com.fulcrologic.rad.options-util :refer [?!]]
@@ -62,7 +63,7 @@
           value      (get props qualified-key)]
       (div :.ui.field {:key (str qualified-key) :classes [(when invalid? "error")]}
         (label (str (or (?! field-label form-instance) (some-> qualified-key name str/capitalize))
-                 (when invalid? " (Required)")))
+                 (when invalid? (str " (" (tr "Required") ")"))))
         (if read-only?
           (let [value (first (filter #(= value (:value %)) options))]
             (dom/input {:readOnly ""

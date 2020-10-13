@@ -3,6 +3,7 @@
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom :refer [div h3 button i span]]
        :clj  [com.fulcrologic.fulcro.dom-server :as dom :refer [div h3 button i span]])
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
+    [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.attributes :as attr]
@@ -36,7 +37,7 @@
         onSelect      (fn [v]
                         (form/input-changed! env qualified-key v))]
     (div :.ui.field {:classes [(when invalid? "error")]}
-      (dom/label field-label (when invalid? " (Required)"))
+      (dom/label field-label (when invalid? (str " (" (tr "Required") ")")))
       (if read-only?
         (let [value (first (filter #(= value (:value %)) options))]
           (:text value))
