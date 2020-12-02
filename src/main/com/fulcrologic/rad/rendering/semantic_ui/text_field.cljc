@@ -2,7 +2,7 @@
   (:require
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     #?(:cljs [com.fulcrologic.fulcro.dom :refer [div label input textarea]]
-       :clj  [com.fulcrologic.fulcro.dom-server :refer [div label input]])
+       :clj  [com.fulcrologic.fulcro.dom-server :refer [div label input textarea]])
     [com.fulcrologic.fulcro.dom.events :as evt]
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.attributes :as attr]
