@@ -6,6 +6,7 @@
     [com.fulcrologic.rad.report :as report]
     [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.fulcro.components :as comp]
+    [com.fulcrologic.rad.semantic-ui-options :as suo]
     #?@(:cljs
         [[com.fulcrologic.fulcro.dom :as dom :refer [div]]
          [com.fulcrologic.semantic-ui.addons.pagination.ui-pagination :as sui-pagination]]
@@ -108,13 +109,15 @@
   {:shouldComponentUpdate (fn [_ _ _] true)}
   (let [controls (control/component-controls report-instance)
         {:keys [::report/paginate?]} (comp/component-options report-instance)
+        {::suo/keys [report-action-button-grouping]} (suo/get-rendering-options report-instance)
         {:keys [input-layout action-layout]} (control/standard-control-layout report-instance)
         {:com.fulcrologic.rad.container/keys [controlled?]} (comp/get-computed report-instance)]
     (comp/fragment
       (div :.ui.top.attached.compact.segment
         (dom/h3 :.ui.header
           (or (some-> report-instance comp/component-options ::report/title (?! report-instance)) (trc "a table that shows a list of rows" "Report"))
-          (div :.ui.right.floated.buttons
+          (div {:className (or (?! report-action-button-grouping report-instance)
+                             "ui right floated buttons")}
             (keep (fn [k]
                     (let [control (get controls k)]
                       (when (or (not controlled?) (:local? control))
