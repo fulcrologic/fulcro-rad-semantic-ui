@@ -53,7 +53,7 @@
     (dom/tr {:classes [(when highlighted? "active")]
              :onClick (fn [evt]
                         (evt/stop-propagation! evt)
-                        (when (false? (suo/get-rendering-options report-instance suo/selectable-table-rows?))
+                        (when-not (false? (suo/get-rendering-options report-instance suo/selectable-table-rows?))
                           (report/select-row! report-instance idx)))}
       (map
         (fn [{::attr/keys [qualified-key] :as column}]
