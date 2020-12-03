@@ -20,22 +20,27 @@
     [com.fulcrologic.fulcro.dom.events :as evt]))
 
 (defn row-action-buttons [report-instance row-props]
-  (let [{::report/keys [row-actions]} (comp/component-options report-instance)]
+  (let [{::report/keys [row-actions]} (comp/component-options report-instance)
+        {::suo/keys [report-row-button-grouping report-row-button-renderer]} (suo/get-rendering-options report-instance)]
     (when (seq row-actions)
-      (div :.ui.buttons
+      (div {:className (or (?! report-row-button-grouping report-instance) "ui buttons")}
         (map-indexed
-          (fn [idx {:keys [label reload? visible? disabled? action]}]
-            (when (or (nil? visible?) (?! visible? report-instance row-props))
-              (dom/button :.ui.button
-                {:key      idx
-                 :disabled (boolean (?! disabled? report-instance row-props))
-                 :onClick  (fn [evt]
-                             (evt/stop-propagation! evt)
-                             (when action
-                               (action report-instance row-props)
-                               (when reload?
-                                 (control/run! report-instance))))}
-                (?! label report-instance row-props))))
+          (fn [idx {:keys [label reload? visible? disabled? action] :as control}]
+            (let [label         (?! label report-instance row-props)
+                  element-props {:key       idx
+                                 :disabled? (boolean (?! disabled? report-instance row-props))
+                                 :onClick   (fn [evt]
+                                              (evt/stop-propagation! evt)
+                                              (when action
+                                                (action report-instance row-props)
+                                                (when reload?
+                                                  (control/run! report-instance))))}]
+              (when (or (nil? visible?) (?! visible? report-instance row-props))
+                (if report-row-button-renderer
+                  (report-row-button-renderer report-instance row-props (merge control
+                                                                          element-props
+                                                                          {:label label}))
+                  (dom/button :.ui.button element-props label)))))
           row-actions)))))
 
 (comp/defsc TableRowLayout [_ {:keys [report-instance props] :as rp}]
@@ -48,7 +53,8 @@
     (dom/tr {:classes [(when highlighted? "active")]
              :onClick (fn [evt]
                         (evt/stop-propagation! evt)
-                        (report/select-row! report-instance idx))}
+                        (when (false? (suo/get-rendering-options report-instance suo/selectable-table-rows?))
+                          (report/select-row! report-instance idx)))}
       (map
         (fn [{::attr/keys [qualified-key] :as column}]
           (let [column-classes (report/column-classes report-instance column)]
@@ -155,10 +161,12 @@
                                                     (comp/computed-factory cls
                                                       {:keyfn (fn [props] (some-> props (comp/get-computed ::report/idx)))})))})}
   (let [{::report/keys [BodyItem]} (comp/component-options report-instance)
-        render-row      ((comp/get-state this :row-factory) BodyItem)
-        render-controls (report/control-renderer this)
-        rows            (report/current-rows report-instance)
-        loading?        (report/loading? report-instance)]
+        render-report-body-item ((comp/get-state this :row-factory) BodyItem)
+        render-controls         (report/control-renderer this)
+        extra-parent-query      (comp/component-options report-instance ::report/query-inclusions)
+        query-inclusion-props   (select-keys (comp/props report-instance) extra-parent-query)
+        rows                    (report/current-rows report-instance)
+        loading?                (report/loading? report-instance)]
     (div
       (when render-controls
         (render-controls report-instance))
@@ -166,9 +174,11 @@
         (div :.ui.loader {:classes [(when loading? "active")]})
         (when (seq rows)
           (div :.ui.relaxed.divided.list
-            (map-indexed (fn [idx row] (render-row row {:report-instance report-instance
-                                                        :row-class       BodyItem
-                                                        ::report/idx     idx})) rows)))))))
+            (map-indexed (fn [idx row]
+                           (render-report-body-item row (merge query-inclusion-props
+                                                          {:report-instance report-instance
+                                                           :row-class       BodyItem
+                                                           ::report/idx     idx}))) rows)))))))
 
 (let [ui-list-report-layout (comp/factory ListReportLayout {:keyfn ::report/idx})]
   (defn render-list-report-layout [report-instance]
@@ -177,27 +187,29 @@
 (defn render-standard-table [this {:keys [report-instance]}]
   (let [{report-column-headings ::report/column-headings
          ::report/keys          [columns row-actions BodyItem compare-rows table-class]} (comp/component-options report-instance)
-        render-row       ((comp/get-state this :row-factory) BodyItem)
-        column-headings  (mapv (fn [{::report/keys [column-heading]
-                                     ::attr/keys   [qualified-key] :as attr}]
-                                 {:column attr
-                                  :label  (or
-                                            (?! (get report-column-headings qualified-key) report-instance)
-                                            (?! column-heading report-instance)
-                                            (some-> qualified-key name str/capitalize)
-                                            "")})
-                           columns)
-        rows             (report/current-rows report-instance)
-        props            (comp/props report-instance)
-        sort-params      (-> props :ui/parameters ::report/sort)
-        sortable?        (if-not (boolean compare-rows)
-                           (constantly false)
-                           (if-let [sortable-columns (some-> sort-params :sortable-columns set)]
-                             (fn [{::attr/keys [qualified-key]}] (contains? sortable-columns qualified-key))
-                             (constantly true)))
-        ascending?       (and sortable? (:ascending? sort-params))
-        sorting-by       (and sortable? (:sort-by sort-params))
-        has-row-actions? (seq row-actions)]
+        render-report-body-item ((comp/get-state this :row-factory) BodyItem)
+        column-headings         (mapv (fn [{::report/keys [column-heading]
+                                            ::attr/keys   [qualified-key] :as attr}]
+                                        {:column attr
+                                         :label  (or
+                                                   (?! (get report-column-headings qualified-key) report-instance)
+                                                   (?! column-heading report-instance)
+                                                   (some-> qualified-key name str/capitalize)
+                                                   "")})
+                                  columns)
+        rows                    (report/current-rows report-instance)
+        extra-parent-query      (comp/component-options report-instance ::report/query-inclusions)
+        query-inclusion-props   (select-keys (comp/props report-instance) extra-parent-query)
+        props                   (comp/props report-instance)
+        sort-params             (-> props :ui/parameters ::report/sort)
+        sortable?               (if-not (boolean compare-rows)
+                                  (constantly false)
+                                  (if-let [sortable-columns (some-> sort-params :sortable-columns set)]
+                                    (fn [{::attr/keys [qualified-key]}] (contains? sortable-columns qualified-key))
+                                    (constantly true)))
+        ascending?              (and sortable? (:ascending? sort-params))
+        sorting-by              (and sortable? (:sort-by sort-params))
+        has-row-actions?        (seq row-actions)]
     (dom/table :.ui.selectable.table {:classes [table-class]}
       (dom/thead
         (dom/tr
@@ -219,10 +231,11 @@
           (map-indexed
             (fn [idx row]
               (let [highlighted-row-idx (report/currently-selected-row report-instance)]
-                (render-row row {:report-instance report-instance
-                                 :row-class       BodyItem
-                                 :highlighted?    (= idx highlighted-row-idx)
-                                 ::report/idx     idx})))
+                (render-report-body-item row (merge query-inclusion-props
+                                               {:report-instance report-instance
+                                                :row-class       BodyItem
+                                                :highlighted?    (= idx highlighted-row-idx)
+                                                ::report/idx     idx}))))
             rows))))))
 
 (defn render-rotated-table [_ {:keys [report-instance] :as env}]

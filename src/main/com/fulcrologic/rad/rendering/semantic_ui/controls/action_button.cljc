@@ -20,18 +20,22 @@
             class     (?! class instance)
             loading?  (df/loading? (get-in props [df/marker-table (comp/get-ident instance)]))
             disabled? (or loading? (?! disabled? instance))
-            visible?  (or (nil? visible?) (?! visible? instance))]
+            visible?  (or (nil? visible?) (?! visible? instance))
+            onClick   (fn [] (when action (action instance control-key)))]
         (when visible?
           (or
-            (?! render instance {:key       control-key
-                                 :control   control
-                                 :disabled? disabled?
-                                 :loading?  loading?})
+            (?! render instance (merge control
+                                  {:key       control-key
+                                   :label     label
+                                   :class     class
+                                   :onClick   onClick
+                                   :disabled? disabled?
+                                   :loading?  loading?}))
             (dom/button :.ui.tiny.primary.button
               {:key      (str control-key)
                :classes  [(when class class)]
                :disabled (boolean disabled?)
-               :onClick  (fn [] (when action (action instance control-key)))}
+               :onClick  onClick}
               (when icon (dom/i {:className (str icon " icon")}))
               (when label label))))))))
 
