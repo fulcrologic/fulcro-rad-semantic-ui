@@ -1,5 +1,6 @@
 (ns com.fulcrologic.rad.rendering.semantic-ui.controls.action-button
   (:require
+    [taoensso.timbre :as log]
     [com.fulcrologic.rad.report :as report]
     [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.semantic-ui-options :as suo]
@@ -31,11 +32,11 @@
                                    :onClick   onClick
                                    :disabled? disabled?
                                    :loading?  loading?}))
-            (dom/button :.ui.tiny.primary.button
-              {:key      (str control-key)
-               :classes  [(when class class)]
-               :disabled (boolean disabled?)
-               :onClick  onClick}
+            (dom/button
+              {:key       (str control-key)
+               :className (or class "ui tiny primary button")
+               :disabled  (boolean disabled?)
+               :onClick   onClick}
               (when icon (dom/i {:className (str icon " icon")}))
               (when label label))))))))
 

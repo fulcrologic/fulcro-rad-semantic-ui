@@ -17,7 +17,8 @@
     [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
     [com.fulcrologic.fulcro.algorithms.merge :as merge]
     [taoensso.encore :as enc]
-    [taoensso.timbre :as log]))
+    [taoensso.timbre :as log]
+    [com.fulcrologic.rad.semantic-ui-options :as suo]))
 
 (defn render-to-many [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
   (let [{:semantic-ui/keys [add-position]
@@ -318,8 +319,14 @@
             title          (?! title form-instance props)
             action-buttons (if action-buttons action-buttons form/standard-action-buttons)]
         (div {:key       (str (comp/get-ident form-instance))
-              :className (or (?! (comp/component-options form-instance ::top-level-class) env) "ui container")}
-          (div {:className (or (?! (comp/component-options form-instance ::controls-class) env) "ui top attached segment")}
+              :className (or
+                           (?! (suo/get-rendering-options form-instance suo/layout-class) env)
+                           (?! (comp/component-options form-instance ::top-level-class) env)
+                           "ui container")}
+          (div {:className (or
+                             (?! (suo/get-rendering-options form-instance suo/controls-class) env)
+                             (?! (comp/component-options form-instance ::controls-class) env)
+                             "ui top attached segment")}
             (dom/h3 :.ui.header
               title
               (div :.ui.right.floated.buttons

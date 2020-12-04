@@ -26,21 +26,25 @@
       (div {:className (or (?! report-row-button-grouping report-instance) "ui buttons")}
         (map-indexed
           (fn [idx {:keys [label reload? visible? disabled? action] :as control}]
-            (let [label         (?! label report-instance row-props)
-                  element-props {:key       idx
-                                 :disabled? (boolean (?! disabled? report-instance row-props))
-                                 :onClick   (fn [evt]
-                                              (evt/stop-propagation! evt)
-                                              (when action
-                                                (action report-instance row-props)
-                                                (when reload?
-                                                  (control/run! report-instance))))}]
+            (let [label     (?! label report-instance row-props)
+                  disabled? (boolean (?! disabled? report-instance row-props))
+                  onClick   (fn [evt]
+                              (evt/stop-propagation! evt)
+                              (when action
+                                (action report-instance row-props)
+                                (when reload?
+                                  (control/run! report-instance))))]
               (when (or (nil? visible?) (?! visible? report-instance row-props))
                 (if report-row-button-renderer
                   (report-row-button-renderer report-instance row-props (merge control
-                                                                          element-props
-                                                                          {:label label}))
-                  (dom/button :.ui.button element-props label)))))
+                                                                          {:label     label
+                                                                           :key       idx
+                                                                           :onClick   onClick
+                                                                           :disabled? disabled?}))
+                  (dom/button :.ui.button {:key      idx
+                                           :disabled disabled?
+                                           :onClick  onClick}
+                    label)))))
           row-actions)))))
 
 (comp/defsc TableRowLayout [_ {:keys [report-instance props] :as rp}]
@@ -49,17 +53,18 @@
         links          (or links link)
         action-buttons (row-action-buttons report-instance props)
         {:keys         [highlighted?]
-         ::report/keys [idx]} (comp/get-computed props)]
+         ::report/keys [idx]} (comp/get-computed props)
+        sui-cell-class (suo/get-rendering-options report-instance suo/report-table-cell-class)]
     (dom/tr {:classes [(when highlighted? "active")]
              :onClick (fn [evt]
                         (evt/stop-propagation! evt)
                         (when-not (false? (suo/get-rendering-options report-instance suo/selectable-table-rows?))
                           (report/select-row! report-instance idx)))}
-      (map
-        (fn [{::attr/keys [qualified-key] :as column}]
+      (map-indexed
+        (fn [idx {::attr/keys [qualified-key] :as column}]
           (let [column-classes (report/column-classes report-instance column)]
             (dom/td {:key     (str "col-" qualified-key)
-                     :classes [column-classes]}
+                     :classes [(?! sui-cell-class report-instance idx) column-classes]}
               (let [{:keys [edit-form entity-id]} (report/form-link report-instance props qualified-key)
                     link-fn (get links qualified-key)
                     label   (report/formatted-column-value report-instance props column)]
@@ -73,7 +78,10 @@
                   :else label)))))
         columns)
       (when action-buttons
-        (dom/td :.collapsing {:key "actions"}
+        (dom/td {:key       "actions"
+                 :className (or
+                              (?! sui-cell-class report-instance (count columns))
+                              "collapsing")}
           action-buttons)))))
 
 (let [ui-table-row-layout (comp/factory TableRowLayout)]
@@ -119,7 +127,9 @@
         {:keys [input-layout action-layout]} (control/standard-control-layout report-instance)
         {:com.fulcrologic.rad.container/keys [controlled?]} (comp/get-computed report-instance)]
     (comp/fragment
-      (div :.ui.top.attached.compact.segment
+      (div {:className (or
+                         (?! (suo/get-rendering-options report-instance suo/controls-class))
+                         "ui top attached compact segment")}
         (dom/h3 :.ui.header
           (or (some-> report-instance comp/component-options ::report/title (?! report-instance)) (trc "a table that shows a list of rows" "Report"))
           (div {:className (or (?! report-action-button-grouping report-instance)
@@ -209,12 +219,15 @@
                                     (constantly true)))
         ascending?              (and sortable? (:ascending? sort-params))
         sorting-by              (and sortable? (:sort-by sort-params))
-        has-row-actions?        (seq row-actions)]
-    (dom/table :.ui.selectable.table {:classes [table-class]}
+        has-row-actions?        (seq row-actions)
+        sui-header-class        (suo/get-rendering-options report-instance suo/report-table-header-class)
+        sui-table-class         (?! (suo/get-rendering-options report-instance suo/report-table-class) report-instance)]
+    (dom/table {:className (or sui-table-class "ui selectable table") :classes [table-class]}
       (dom/thead
         (dom/tr
           (map-indexed (fn [idx {:keys [label column]}]
-                         (dom/th {:key idx}
+                         (dom/th {:key     idx
+                                  :classes [(?! sui-header-class report-instance idx)]}
                            (if (sortable? column)
                              (dom/a {:onClick (fn [evt]
                                                 (evt/stop-propagation! evt)
@@ -225,7 +238,9 @@
                                    (dom/i :.angle.up.icon))))
                              (str label))))
             column-headings)
-          (when has-row-actions? (dom/th :.collapsing ""))))
+          (when has-row-actions? (dom/th {:classes [(or
+                                                      (?! sui-header-class report-instance (count column-headings))
+                                                      "collapsing")]} ""))))
       (when (seq rows)
         (dom/tbody
           (map-indexed
@@ -269,8 +284,11 @@
                                      label)))
                            columns)
         rows             (report/current-rows report-instance)
-        has-row-actions? (seq row-actions)]
-    (dom/table :.ui.compact.collapsing.definition.selectable.table {:classes [table-class]}
+        has-row-actions? (seq row-actions)
+        sui-table-class  (?! (suo/get-rendering-options report-instance suo/report-rotated-table-class) report-instance)
+        sui-cell-class   (suo/get-rendering-options report-instance suo/report-table-cell-class)]
+    (dom/table {:className (or sui-table-class "ui compact collapsing definition selectable table")
+                :classes   [table-class]}
       (when (seq rows)
         (comp/fragment
           (dom/thead
@@ -292,11 +310,13 @@
                   (dom/td (get row-headings (inc idx)))
                   (map-indexed
                     (fn [idx row]
-                      (dom/td {:key idx :className "right aligned"}
-                        (report/formatted-column-value report-instance row col))) rows)
+                      (let [user-defined-cell-class (?! sui-cell-class report-instance idx)]
+                        (dom/td {:key idx :className (or user-defined-cell-class "right aligned")}
+                          (report/formatted-column-value report-instance row col)))) rows)
                   (when has-row-actions?
-                    (dom/td {:key "actions"}
-                      (row-action-buttons report-instance col)))))
+                    (let [user-defined-cell-class (when sui-cell-class (sui-cell-class report-instance (count rows)))]
+                      (dom/td {:key "actions" :classes [user-defined-cell-class]}
+                        (row-action-buttons report-instance col))))))
               (rest columns))))))))
 
 (comp/defsc TableReportLayout [this {:keys [report-instance] :as env}]
@@ -308,13 +328,16 @@
         rotate?         (?! rotate? report-instance)
         render-controls (report/control-renderer report-instance)
         loading?        (report/loading? report-instance)
-        controlled?     (comp/get-computed report-instance :com.fulcrologic.rad.container/controlled?)
         props           (comp/props report-instance)
-        busy?           (:ui/busy? props)]
-    (div
+        busy?           (:ui/busy? props)
+        layout-class    (?! (suo/get-rendering-options report-instance suo/layout-class) report-instance)
+        body-class      (or
+                          (?! (suo/get-rendering-options report-instance suo/body-class) report-instance)
+                          "ui attached segment")]
+    (div {:className layout-class}
       (when render-controls
         (render-controls report-instance))
-      (div :.ui.attached.segment
+      (div {:className body-class}
         (div :.ui.orange.loader {:classes [(when (or busy? loading?) "active")]})
         (if rotate?
           (render-rotated-table this env)
@@ -323,5 +346,4 @@
 (let [ui-table-report-layout (comp/factory TableReportLayout {:keyfn ::report/idx})]
   (defn render-table-report-layout [this]
     (ui-table-report-layout {:report-instance this})))
-
 

@@ -73,6 +73,57 @@
   the default (button) will be rendered."
   ::action-button-render)
 
+(def layout-class
+  "The CSS class of the div that holds the top-level layout of the report or form.  Defaults
+   to some variant of 'ui segment'.
+
+   A string or `(fn [instance] string?)`."
+  ::layout-class)
+
+(def controls-class
+  "The CSS class of the div that holds the controls on layouts that have a control section. Defaults
+   to some variant of 'ui top attached segment'.
+
+   A string or `(fn [instance] string?)`."
+  ::controls-class)
+
+(def body-class
+  "The CSS class of the div that holds the actual body of the page (e.g. form or report).
+   Defaults to some variant of 'ui attached segment'.
+
+   A string or `(fn [instance] string?)`."
+  ::body-class)
+
+(def report-table-class
+  "The CSS class of generated report tables. Defaults to 'ui selectable table'.
+
+  A string or `(fn [report-instance] string?)`."
+  ::report-table-class)
+
+(def report-rotated-table-class
+  "The CSS class of generated report tables that are rotated. Defaults to 'ui compact collapsing definition selectable table'.
+
+  A string or `(fn [report-instance] string?)`."
+  ::report-rotated-table-class)
+
+(def report-table-header-class
+  "The CSS class of headers in a table-style report. Data cells defaults to nothing.
+   Action buttons are have a column index and default to 'collapsing'.
+
+   A `(fn [report-instance zero-based-column-index] string?)`.
+
+   NOTE: Action buttons are add and have a column index. They default to 'collapsing'"
+  ::report-table-header-class)
+
+(def report-table-cell-class
+  "The CSS class of cells in a table-style report. Defaults to nothing for normal tables, and 'right aligned' for
+   rotated ones. Action buttons are have a column index and default to 'collapsing'.
+
+  A `(fn [report-instance zero-based-column-index] string?)`.
+
+  "
+  ::report-table-cell-class)
+
 (def selectable-table-rows?
   "A boolean. When true the table will support click on a row to affix a highlight to that row."
   ::selectable-table-rows?)
