@@ -142,7 +142,10 @@
         (div :.ui.form
           (map-indexed
             (fn [idx row]
-              (div {:key idx :className (sui-form/n-fields-string (count row))}
+              (div {:key       idx
+                    :className (or
+                                 (?! (suo/get-rendering-options report-instance suo/report-controls-row-class) report-instance idx)
+                                 (sui-form/n-fields-string (count row)))}
                 (keep #(let [control (get controls %)]
                          (when (or (not controlled?) (:local? control))
                            (control/render-control report-instance % control))) row)))

@@ -128,6 +128,12 @@
   "A boolean. When true the table will support click on a row to affix a highlight to that row."
   ::selectable-table-rows?)
 
+(def report-controls-row-class
+  "A string or `(fn [report-instance zero-based-row-idx] string?)`. A function that returns the CSS class
+   for the given row of the report controls input form. Defaults to 'n fields', where n
+   is one, two, etc.  The `zero-based-row-idx` is the row being rendered."
+  ::report-controls-row-class)
+
 (defn get-rendering-options
   "Get rendering options from a mounted component `c`.
 
