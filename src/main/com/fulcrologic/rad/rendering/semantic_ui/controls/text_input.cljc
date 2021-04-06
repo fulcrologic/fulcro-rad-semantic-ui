@@ -9,6 +9,10 @@
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom]
        :clj  [com.fulcrologic.fulcro.dom-server :as dom])))
 
+(defn- internal-store-name [control-key]
+  (keyword (str 'com.fulcrologic.rad.rendering.semantic-ui.controls.text-input_ (namespace control-key))
+    (name control-key)))
+
 (defsc TextControl [this {:keys [instance control-key]}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
   (let [controls (control/component-controls instance)
@@ -19,18 +23,18 @@
             disabled?   (?! disabled? instance)
             placeholder (?! placeholder)
             visible?    (or (nil? visible?) (?! visible? instance))
-            ;; TASK: Change the value we're storing to include what we last sent as a change vs what we're tracking as user types
-            {:keys [old-value value]} (control/current-value instance control-key)
-            chg!        #(control/set-parameter! instance control-key {:old-value old-value
-                                                                       :value     (evt/target-value %)})
-            run!        (fn [evt] (let [v                 (evt/target-value evt)
-                                        actually-changed? (not= v old-value)]
-                                    ;; TASK: Don't actually trigger a run unless the value has really changed
-                                    (when (and onChange actually-changed?)
-                                      (control/set-parameter! instance control-key {:value     (evt/target-value %)
-                                                                                    :old-value (evt/target-value %)})
-                                      ;; Change the URL parameter
-                                      (onChange instance v))))]
+            value       (control/current-value instance control-key)
+            {:keys [last-sent-value]} (control/current-value instance (internal-store-name control-key))
+            chg!        #(control/set-parameter! instance control-key (evt/target-value %))
+            run!        (fn [run-if-unchanged? evt] (let [v                 (evt/target-value evt)
+                                                          actually-changed? (not= v last-sent-value)]
+                                                      (when (and onChange (or run-if-unchanged? actually-changed?))
+                                                        (control/set-parameter! instance control-key v)
+                                                        (control/set-parameter! instance 
+                                                          (internal-store-name control-key)
+                                                          {:last-sent-value v})
+                                                        ;; Change the URL parameter
+                                                        (onChange instance v))))]
         (when visible?
           (dom/div :.ui.field {:key (str control-key)}
             (dom/label label)
@@ -40,14 +44,14 @@
                 (dom/input {:readOnly    (boolean disabled?)
                             :placeholder (str placeholder)
                             :onChange    chg!
-                            :onBlur      run!
-                            :onKeyDown   (fn [evt] (when (evt/enter? evt) (run! evt)))
+                            :onBlur      (partial run! false)
+                            :onKeyDown   (fn [evt] (when (evt/enter? evt) (run! true evt)))
                             :value       (str value)}))
               (dom/input {:readOnly    (boolean disabled?)
                           :placeholder (str placeholder)
                           :onChange    chg!
-                          :onBlur      run!
-                          :onKeyDown   (fn [evt] (when (evt/enter? evt) (run! evt)))
+                          :onBlur      (partial run! false)
+                          :onKeyDown   (fn [evt] (when (evt/enter? evt) (run! true evt)))
                           :value       (str value)}))))))))
 
 (def render-control (comp/factory TextControl {:keyfn :control-key}))
