@@ -19,10 +19,18 @@
             disabled?   (?! disabled? instance)
             placeholder (?! placeholder)
             visible?    (or (nil? visible?) (?! visible? instance))
-            chg!        #(control/set-parameter! instance control-key (evt/target-value %))
-            run!        (fn [evt] (let [v (evt/target-value evt)]
-                                    (when onChange (onChange instance v))))
-            value       (control/current-value instance control-key)]
+            ;; TASK: Change the value we're storing to include what we last sent as a change vs what we're tracking as user types
+            {:keys [old-value value]} (control/current-value instance control-key)
+            chg!        #(control/set-parameter! instance control-key {:old-value old-value
+                                                                       :value     (evt/target-value %)})
+            run!        (fn [evt] (let [v                 (evt/target-value evt)
+                                        actually-changed? (not= v old-value)]
+                                    ;; TASK: Don't actually trigger a run unless the value has really changed
+                                    (when (and onChange actually-changed?)
+                                      (control/set-parameter! instance control-key {:value     (evt/target-value %)
+                                                                                    :old-value (evt/target-value %)})
+                                      ;; Change the URL parameter
+                                      (onChange instance v))))]
         (when visible?
           (dom/div :.ui.field {:key (str control-key)}
             (dom/label label)
