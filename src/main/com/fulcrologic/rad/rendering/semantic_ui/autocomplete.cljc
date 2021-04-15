@@ -105,7 +105,7 @@
    :componentDidMount     (fn [this]
                             (let [id (comp/get-state this :field-id)
                                   {:keys [attribute]} (comp/get-computed this)
-                                  {:autocomplete/keys [search-key debounce-ms minimum-input]} (::form/field-options attribute)]
+                                  {:autocomplete/keys [search-key debounce-ms minimum-input]} attribute]
                               (merge/merge-component! this AutocompleteField {::autocomplete-id           id
                                                                               :autocomplete/search-key    search-key
                                                                               :autocomplete/debounce-ms   debounce-ms
@@ -119,7 +119,7 @@
                             (comp/transact! this [(gc-autocomplete {:id (comp/get-state this :field-id)})])
                             (mroot/deregister-root! this))
    :query                 [::autocomplete-id]}
-  (let [{:autocomplete/keys [debounce-ms search-key]} (::form/field-options attribute)
+  (let [{:autocomplete/keys [debounce-ms search-key]} attribute
         k                  (::attr/qualified-key attribute)
         {::form/keys [form-instance]} env
         value              (-> (comp/props form-instance) (get k))
