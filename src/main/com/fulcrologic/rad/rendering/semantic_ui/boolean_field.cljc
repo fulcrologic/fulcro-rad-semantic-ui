@@ -16,18 +16,20 @@
         props       (comp/props form-instance)
         user-props  (?! (form/field-style-config env attribute :input/props) env)
         field-label (form/field-label env attribute)
+        visible?    (form/field-visible? form-instance attribute)
         read-only?  (form/read-only? form-instance attribute)
         value       (get props k false)]
-    (div :.ui.field {:key (str k)}
-      (div :.ui.checkbox
-        (input (merge
-                 {:checked  value
-                  :type     "checkbox"
-                  :disabled (boolean read-only?)
-                  :onChange (fn [evt]
-                              (let [v (not value)]
-                                (form/input-blur! env k v)
-                                (form/input-changed! env k v)))}
-                 user-props))
-        (label field-label)))))
+    (when visible?
+      (div :.ui.field {:key (str k)}
+           (div :.ui.checkbox
+                (input (merge
+                        {:checked  value
+                         :type     "checkbox"
+                         :disabled (boolean read-only?)
+                         :onChange (fn [evt]
+                                     (let [v (not value)]
+                                       (form/input-blur! env k v)
+                                       (form/input-changed! env k v)))}
+                        user-props))
+                (label field-label))))))
 
