@@ -20,33 +20,35 @@
                               form-class    (comp/react-type form-instance)]
                           (picker-options/load-options! form-instance form-class props attr)))}
   (let [{::form/keys [master-form form-instance]} env
-        {::form/keys [attributes field-options]} (comp/component-options form-instance)
-        {::attr/keys [qualified-key required?]} attr
-        field-options (get field-options qualified-key)
-        target-id-key (first (keep (fn [{k ::attr/qualified-key ::attr/keys [target]}]
-                                     (when (= k qualified-key) target)) attributes))
-        {::picker-options/keys [cache-key query-key]} (merge attr field-options)
-        cache-key     (or (?! cache-key (comp/react-type form-instance) (comp/props form-instance)) query-key)
-        cache-key     (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
-        props         (comp/props form-instance)
-        options       (get-in props [::picker-options/options-cache cache-key :options])
-        value         [target-id-key (get-in props [qualified-key target-id-key])]
-        field-label   (form/field-label env attr)
-        read-only?    (or (form/read-only? master-form attr) (form/read-only? form-instance attr))
-        invalid?      (and (not read-only?) (validation/invalid-attribute-value? env attr))
-        onSelect      (fn [v]
-                        (form/input-changed! env qualified-key v))]
-    (div :.ui.field {:classes [(when invalid? "error")]}
-      (dom/label field-label (when invalid? (str " (" (tr "Required") ")")))
-      (if read-only?
-        (let [value (first (filter #(= value (:value %)) options))]
-          (:text value))
-        (ui-wrapped-dropdown (cond->
-                               {:onChange  (fn [v] (onSelect v))
-                                :value     value
-                                :clearable (not required?)
-                                :disabled  read-only?
-                                :options   options}))))))
+        visible?      (form/field-visible? form-instance attr)]
+    (when visible?
+      (let [{::form/keys [attributes field-options]} (comp/component-options form-instance)
+            {::attr/keys [qualified-key required?]} attr
+            field-options (get field-options qualified-key)
+            target-id-key (first (keep (fn [{k ::attr/qualified-key ::attr/keys [target]}]
+                                         (when (= k qualified-key) target)) attributes))
+            {::picker-options/keys [cache-key query-key]} (merge attr field-options)
+            cache-key     (or (?! cache-key (comp/react-type form-instance) (comp/props form-instance)) query-key)
+            cache-key     (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
+            props         (comp/props form-instance)
+            options       (get-in props [::picker-options/options-cache cache-key :options])
+            value         [target-id-key (get-in props [qualified-key target-id-key])]
+            field-label   (form/field-label env attr)
+            read-only?    (or (form/read-only? master-form attr) (form/read-only? form-instance attr))
+            invalid?      (and (not read-only?) (validation/invalid-attribute-value? env attr))
+            onSelect      (fn [v]
+                            (form/input-changed! env qualified-key v))]
+        (div :.ui.field {:classes [(when invalid? "error")]}
+             (dom/label field-label (when invalid? (str " (" (tr "Required") ")")))
+             (if read-only?
+               (let [value (first (filter #(= value (:value %)) options))]
+                 (:text value))
+               (ui-wrapped-dropdown (cond->
+                                     {:onChange  (fn [v] (onSelect v))
+                                      :value     value
+                                      :clearable (not required?)
+                                      :disabled  read-only?
+                                      :options   options}))))))))
 
 (let [ui-to-one-picker (comp/factory ToOnePicker {:keyfn (fn [{:keys [attr]}] (::attr/qualified-key attr))})]
   (defn to-one-picker [env attribute]
