@@ -46,6 +46,7 @@
               :com.fulcrologic.rad.blob/file-upload blob-field/render-file-upload}
     :int     {:default int-field/render-field
               :picker  enumerated-field/render-field}
+    :keyword {:default enumerated-field/render-field}
     :long    {:default int-field/render-field
               :picker  enumerated-field/render-field}
     :decimal {:default decimal-field/render-field

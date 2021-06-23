@@ -44,7 +44,7 @@
                                                                                     invalid? validation-message
                                                                                     read-only?]}]
   {:initLocalState    (fn [this]
-                        ;; TASK: props not making it...fix that, or debounce isn't configurable.
+                        ;; Possible problem???: props not making it...fix that, or debounce isn't configurable.
                         (let [{:autocomplete/keys [debounce-ms]} (comp/props this)]
                           {:load! (opts/debounce
                                     (fn [s]
