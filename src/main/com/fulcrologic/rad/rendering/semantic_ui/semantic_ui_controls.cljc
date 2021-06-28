@@ -9,6 +9,7 @@
     [com.fulcrologic.rad.rendering.semantic-ui.boolean-field :as boolean-field]
     [com.fulcrologic.rad.rendering.semantic-ui.decimal-field :as decimal-field]
     [com.fulcrologic.rad.rendering.semantic-ui.int-field :as int-field]
+    [com.fulcrologic.rad.rendering.semantic-ui.double-field :as double-field]
     [com.fulcrologic.rad.rendering.semantic-ui.controls.boolean-control :as boolean-input]
     [com.fulcrologic.rad.rendering.semantic-ui.controls.action-button :as action-button]
     [com.fulcrologic.rad.rendering.semantic-ui.controls.text-input :as text-input]
@@ -51,6 +52,7 @@
               :picker  enumerated-field/render-field}
     :decimal {:default decimal-field/render-field
               :USD     currency-field/render-field}
+    :double  {:default double-field/render-field}
     :boolean {:default boolean-field/render-field}
     :instant {:default      instant/render-field
               :picker       enumerated-field/render-field
