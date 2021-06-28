@@ -53,7 +53,7 @@
             options))))))
 
 (defn- render-to-one [{::form/keys [form-instance] :as env} {::form/keys [field-label]
-                                                             ::attr/keys [qualified-key computed-options] :as attribute}]
+                                                             ::attr/keys [qualified-key computed-options required?] :as attribute}]
   (when (form/field-visible? form-instance attribute)
     (let [props      (comp/props form-instance)
           read-only? (form/read-only? form-instance attribute)
@@ -69,9 +69,10 @@
             (dom/input {:readOnly "readonly"
                         :value    (:text value)}))
           (ui-wrapped-dropdown (merge
-                                 {:options  options
-                                  :value    value
-                                  :onChange (fn [v] (form/input-changed! env qualified-key v))}
+                                 {:options   options
+                                  :clearable (not required?)
+                                  :value     value
+                                  :onChange  (fn [v] (form/input-changed! env qualified-key v))}
                                  user-props)))))))
 
 (defn render-field [env {::attr/keys [cardinality] :or {cardinality :one} :as attribute}]
