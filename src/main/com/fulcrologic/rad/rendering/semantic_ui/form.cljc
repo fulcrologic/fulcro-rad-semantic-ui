@@ -31,6 +31,7 @@
         items               (get form-instance-props k)
         title               (?! (or title (some-> ui (comp/component-options ::form/title)) "") form-instance form-instance-props)
         invalid?            (validation/invalid-attribute-value? env attr)
+        visible?            (form/field-visible? form-instance attr)
         validation-message  (validation/validation-error-message env attr)
         add                 (when (or (nil? add?) add?)
                               (let [order (if (keyword? add?) add? :append)]
@@ -59,24 +60,25 @@
                                                                    ::form/child-class ui)))}
                                     (i :.plus.icon)))))
         ui-factory          (comp/computed-factory ui {:keyfn (fn [item] (-> ui (comp/get-ident item) second str))})]
-    (div :.ui.container {:key (str k)}
-      (h3 title (span ent/nbsp ent/nbsp) (when (or (nil? add-position) (= :top add-position)) add))
-      (when invalid?
-        (div :.ui.error.message
-          validation-message))
-      (if (seq items)
-        (div {:className (or (?! ref-container-class env) "ui segments")}
-          (mapv
-            (fn [props]
-              (ui-factory props
-                (merge
-                  env
-                  {::form/parent          form-instance
-                   ::form/parent-relation k
-                   ::form/can-delete?     (if delete? (delete? props) false)})))
-            items))
-        (div :.ui.message "None."))
-      (when (= :bottom add-position) add))))
+    (when visible?
+      (div :.ui.container {:key (str k)}
+        (h3 title (span ent/nbsp ent/nbsp) (when (or (nil? add-position) (= :top add-position)) add))
+        (when invalid?
+          (div :.ui.error.message
+            validation-message))
+        (if (seq items)
+          (div {:className (or (?! ref-container-class env) "ui segments")}
+            (mapv
+              (fn [props]
+                (ui-factory props
+                  (merge
+                    env
+                    {::form/parent          form-instance
+                     ::form/parent-relation k
+                     ::form/can-delete?     (if delete? (delete? props) false)})))
+              items))
+          (div :.ui.message "None."))
+        (when (= :bottom add-position) add)))))
 
 (defn render-to-one [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
   (let [{::form/keys [ui can-add? can-delete? title ref-container-class]} (get subforms k)
@@ -84,6 +86,7 @@
         props              (get form-props k)
         title              (?! (or title (some-> ui (comp/component-options ::form/title)) "") form-instance form-props)
         ui-factory         (comp/computed-factory ui)
+        visible?           (form/field-visible? form-instance attr)
         invalid?           (validation/invalid-attribute-value? env attr)
         validation-message (validation/validation-error-message env attr)
         std-props          {::form/nested?         true
@@ -92,21 +95,22 @@
                             ::form/can-delete?     (or
                                                      (?! can-delete? form-instance form-props)
                                                      false)}]
-    (cond
-      props
-      (div {:key (str k) :classes [(?! ref-container-class env)]}
-        (h3 :.ui.header title)
-        (when invalid?
-          (div :.ui.error.message validation-message))
-        (ui-factory props (merge env std-props)))
+    (when visible?
+      (cond
+        props
+        (div {:key (str k) :classes [(?! ref-container-class env)]}
+          (h3 :.ui.header title)
+          (when invalid?
+            (div :.ui.error.message validation-message))
+          (ui-factory props (merge env std-props)))
 
-      (or (nil? can-add?) (?! can-add? form-instance attr))
-      (div {:key (str k) :classes [(?! ref-container-class env)]}
-        (h3 :.ui.header title)
-        (button :.ui.primary.button {:onClick (fn [] (form/add-child! (assoc env
-                                                                        ::form/parent-relation k
-                                                                        ::form/parent form-instance
-                                                                        ::form/child-class ui)))} (tr "Create"))))))
+        (or (nil? can-add?) (?! can-add? form-instance attr))
+        (div {:key (str k) :classes [(?! ref-container-class env)]}
+          (h3 :.ui.header title)
+          (button :.ui.primary.button {:onClick (fn [] (form/add-child! (assoc env
+                                                                          ::form/parent-relation k
+                                                                          ::form/parent form-instance
+                                                                          ::form/child-class ui)))} (tr "Create")))))))
 
 (defn standard-ref-container [env {::attr/keys [cardinality] :as attr} options]
   (if (= :many cardinality)
@@ -120,18 +124,20 @@
         props      (get form-props k)
         ui-factory (comp/computed-factory ui)
         label      (form/field-label env attr)
+        visible?   (form/field-visible? form-instance attr)
         std-props  {::form/nested?         true
                     ::form/parent          form-instance
                     ::form/parent-relation k
                     ::form/can-delete?     (if can-delete?
                                              (can-delete? parent props)
                                              false)}]
-    (if props
-      (div :.field {:key (str k)}
-        (dom/label label)
-        (ui-factory props (merge env std-props)))
-      (div {:key (str k)}
-        (div (tr "Upload??? (TODO)"))))))
+    (when visible?
+      (if props
+        (div :.field {:key (str k)}
+          (dom/label label)
+          (ui-factory props (merge env std-props)))
+        (div {:key (str k)}
+          (div (tr "Upload??? (TODO)")))))))
 
 (defsc ManyFiles [this {{::form/keys [form-instance master-form] :as env} :env
                         {k ::attr/qualified-key :as attr}                 :attribute
