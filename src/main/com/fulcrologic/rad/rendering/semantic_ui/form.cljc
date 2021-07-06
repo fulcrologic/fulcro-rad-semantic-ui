@@ -184,25 +184,27 @@
                                                           (merge/merge-component! form-instance ui new-entity :append target)
                                                           (blob/upload-file! form-instance sha-attr js-file {:file-ident [id-key new-id]})
                                                           (comp/set-state! this {:input-key (str (rand-int 1000000))})))})))
+        visible?            (form/field-visible? form-instance attr)
         ui-factory          (comp/computed-factory ui {:keyfn (fn [item] (-> ui (comp/get-ident item) second str))})]
-    (div :.ui.basic.segment {:key (str k)}
-      (dom/h2 :.ui.header title)
-      (when (or (nil? add-position) (= :top add-position)) add)
-      (if (seq items)
-        (div :.ui.very.relaxed.items
-          (mapv
-            (fn [props]
-              (ui-factory props
-                (merge
-                  env
-                  {::form/parent          form-instance
-                   ::form/parent-relation k
-                   ::form/can-delete?     (if delete? (?! delete? props) false)})))
-            items))
-        (div :.ui.message
-          (trc "there are no files in a list of uploads" "No files.")))
+    (when visible?
+      (div :.ui.basic.segment {:key (str k)}
+        (dom/h2 :.ui.header title)
+        (when (or (nil? add-position) (= :top add-position)) add)
+        (if (seq items)
+          (div :.ui.very.relaxed.items
+            (mapv
+              (fn [props]
+                (ui-factory props
+                  (merge
+                    env
+                    {::form/parent          form-instance
+                     ::form/parent-relation k
+                     ::form/can-delete?     (if delete? (?! delete? props) false)})))
+              items))
+          (div :.ui.message
+            (trc "there are no files in a list of uploads" "No files.")))
 
-      (when (= :bottom add-position) add))))
+        (when (= :bottom add-position) add)))))
 
 (def ui-many-files (comp/factory ManyFiles {:keyfn (fn [{:keys [attribute]}] (::attr/qualified-key attribute))}))
 
