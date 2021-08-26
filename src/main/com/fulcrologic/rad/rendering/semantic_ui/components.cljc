@@ -64,18 +64,22 @@
                            :selectOnNavigation true
                            :multiple           (boolean multiple)}
                           props
-                          {:value    value
-                           :options  options
-                           :onChange (fn [e v]
-                                       (try
-                                         (let [string-value (.-value v)
-                                               value        (if multiple
-                                                              (mapv #(when (seq %) (ftransit/transit-str->clj %)) string-value)
-                                                              (when (seq string-value) (ftransit/transit-str->clj string-value)))]
-                                           (when userOnChange
-                                             (userOnChange value)))
-                                         (catch :default e
-                                           (log/error "Unable to read dropdown value " e (when v (.-value v))))))})]
+                          {:value       value
+                           :searchInput (fn [SearchInput js-props]
+                                          ;; HACK for Chrome
+                                          (set! (.-autoComplete js-props) "no-autocomplete")
+                                          (dom/create-element SearchInput js-props))
+                           :options     options
+                           :onChange    (fn [e v]
+                                          (try
+                                            (let [string-value (.-value v)
+                                                  value        (if multiple
+                                                                 (mapv #(when (seq %) (ftransit/transit-str->clj %)) string-value)
+                                                                 (when (seq string-value) (ftransit/transit-str->clj string-value)))]
+                                              (when userOnChange
+                                                (userOnChange value)))
+                                            (catch :default e
+                                              (log/error "Unable to read dropdown value " e (when v (.-value v))))))})]
        (ui-dropdown props))
      :clj
      (dom/div :.ui.selection.dropdown
