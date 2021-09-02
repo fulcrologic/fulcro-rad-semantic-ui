@@ -136,7 +136,9 @@
                              "ui right floated buttons")}
             (keep (fn [k]
                     (let [control (get controls k)]
-                      (when (or (not controlled?) (:local? control))
+                      (when (and (or (not controlled?) (:local? control))
+                                 (-> (get control :visible? true)
+                                     (?! report-instance)))
                         (control/render-control report-instance k control))))
               action-layout)))
         (div :.ui.form
