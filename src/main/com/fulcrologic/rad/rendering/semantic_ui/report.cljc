@@ -26,24 +26,27 @@
       (div {:className (or (?! report-row-button-grouping report-instance) "ui buttons")}
         (map-indexed
           (fn [idx {:keys [label reload? visible? disabled? action] :as control}]
-            (let [label     (?! label report-instance row-props)
-                  disabled? (boolean (?! disabled? report-instance row-props))
-                  onClick   (fn [evt]
-                              (evt/stop-propagation! evt)
-                              (when action
-                                (action report-instance row-props)
-                                (when reload?
-                                  (control/run! report-instance))))]
+            (let [disabled?     (boolean (?! disabled? report-instance row-props))
+                  onClick       (fn [evt]
+                                  (evt/stop-propagation! evt)
+                                  (when action
+                                    (action report-instance row-props)
+                                    (when reload?
+                                      (control/run! report-instance))))
+                  control-props (merge control
+                                  {:label     label
+                                   :key       idx
+                                   :onClick   onClick
+                                   :disabled? disabled?})
+                  label         (?! label report-instance row-props control-props)]
               (when (or (nil? visible?) (?! visible? report-instance row-props))
                 (if report-row-button-renderer
-                  (report-row-button-renderer report-instance row-props (merge control
-                                                                          {:label     label
-                                                                           :key       idx
-                                                                           :onClick   onClick
-                                                                           :disabled? disabled?}))
-                  (dom/button :.ui.button {:key      idx
-                                           :disabled disabled?
-                                           :onClick  onClick}
+                  (report-row-button-renderer report-instance row-props control-props)
+                  (if (string? label)
+                    (dom/button :.ui.button {:key      idx
+                                             :disabled disabled?
+                                             :onClick  onClick}
+                      label)
                     label)))))
           row-actions)))))
 
@@ -137,8 +140,8 @@
             (keep (fn [k]
                     (let [control (get controls k)]
                       (when (and (or (not controlled?) (:local? control))
-                                 (-> (get control :visible? true)
-                                     (?! report-instance)))
+                              (-> (get control :visible? true)
+                                (?! report-instance)))
                         (control/render-control report-instance k control))))
               action-layout)))
         (div :.ui.form
