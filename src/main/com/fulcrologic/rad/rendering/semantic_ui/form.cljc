@@ -77,7 +77,7 @@
                      ::form/parent-relation k
                      ::form/can-delete?     (if delete? (delete? props) false)})))
               items))
-          (div :.ui.message "None."))
+          (div :.ui.message (tr "None.")))
         (when (= :bottom add-position) add)))))
 
 (defn render-to-one [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
