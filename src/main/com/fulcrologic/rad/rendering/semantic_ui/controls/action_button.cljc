@@ -15,7 +15,7 @@
   (let [controls (control/component-controls instance)
         render   (suo/get-rendering-options instance suo/action-button-render)
         props    (comp/props instance)
-        {:keys [label icon class action disabled? visible?] :as control} (get controls control-key)]
+        {:keys [label icon class htmlStyle action disabled? visible?] :as control} (get controls control-key)]
     (when control
       (let [label     (?! label instance)
             class     (?! class instance)
@@ -33,10 +33,11 @@
                                    :disabled? disabled?
                                    :loading?  loading?}))
             (dom/button
-              {:key       (str control-key)
-               :className (or class "ui tiny primary button")
-               :disabled  (boolean disabled?)
-               :onClick   onClick}
+              (cond-> {:key       (str control-key)
+                       :className (or class "ui tiny primary button")
+                       :disabled  (boolean disabled?)
+                       :onClick   onClick}
+                htmlStyle (assoc :style htmlStyle))
               (when icon (dom/i {:className (str icon " icon")}))
               (when label label))))))))
 
