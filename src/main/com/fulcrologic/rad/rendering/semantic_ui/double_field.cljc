@@ -25,8 +25,8 @@
   a raw react event, and you should supply an int for `:value` instead of a string.  You may set the `:type` to text
   or number depending on how you want the control to display, even though the model value is always an int or nil.
   All other attributes passed in props are passed through to the contained `dom/input`."
-  (comp/factory (StringBufferedInput ::IntInput {:model->string str
-                                                 :string->model to-numeric
-                                                 :string-filter just-decimal})))
+  (comp/factory (StringBufferedInput ::DoubleInput {:model->string str
+                                                    :string->model to-numeric
+                                                    :string-filter just-decimal})))
 
 (def render-field (render-field-factory ui-double-input))
