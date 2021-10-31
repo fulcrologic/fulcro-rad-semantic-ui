@@ -2,14 +2,15 @@
   (:require
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom :refer [div h3 button i span]]
        :clj  [com.fulcrologic.fulcro.dom-server :as dom :refer [div h3 button i span]])
-    [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
-    [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
-    [com.fulcrologic.rad.form :as form]
+    [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
     [com.fulcrologic.rad.attributes :as attr]
-    [com.fulcrologic.rad.picker-options :as picker-options]
-    [com.fulcrologic.rad.ui-validation :as validation]
+    [com.fulcrologic.rad.form :as form]
+    [com.fulcrologic.rad.form-options :as fo]
     [com.fulcrologic.rad.options-util :refer [?!]]
+    [com.fulcrologic.rad.picker-options :as picker-options]
+    [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
+    [com.fulcrologic.rad.ui-validation :as validation]
     [taoensso.timbre :as log]))
 
 (defsc ToOnePicker [this {:keys [env attr]}]
@@ -20,7 +21,7 @@
                               form-class    (comp/react-type form-instance)]
                           (picker-options/load-options! form-instance form-class props attr)))}
   (let [{::form/keys [master-form form-instance]} env
-        visible?      (form/field-visible? form-instance attr)]
+        visible? (form/field-visible? form-instance attr)]
     (when visible?
       (let [{::form/keys [attributes field-options]} (comp/component-options form-instance)
             {::attr/keys [qualified-key required?]} attr
@@ -36,19 +37,20 @@
             field-label   (form/field-label env attr)
             read-only?    (or (form/read-only? master-form attr) (form/read-only? form-instance attr))
             invalid?      (and (not read-only?) (validation/invalid-attribute-value? env attr))
+            extra-props   (?! (form/field-style-config env attr :input/props) env)
             onSelect      (fn [v]
                             (form/input-changed! env qualified-key v))]
         (div :.ui.field {:classes [(when invalid? "error")]}
-             (dom/label field-label (when invalid? (str " (" (tr "Required") ")")))
-             (if read-only?
-               (let [value (first (filter #(= value (:value %)) options))]
-                 (:text value))
-               (ui-wrapped-dropdown (cond->
-                                     {:onChange  (fn [v] (onSelect v))
-                                      :value     value
-                                      :clearable (not required?)
-                                      :disabled  read-only?
-                                      :options   options}))))))))
+          (dom/label field-label (when invalid? (str " (" (tr "Required") ")")))
+          (if read-only?
+            (let [value (first (filter #(= value (:value %)) options))]
+              (:text value))
+            (ui-wrapped-dropdown (merge extra-props
+                                   {:onChange  (fn [v] (onSelect v))
+                                    :value     value
+                                    :clearable (not required?)
+                                    :disabled  read-only?
+                                    :options   options}))))))))
 
 (let [ui-to-one-picker (comp/factory ToOnePicker {:keyfn (fn [{:keys [attr]}] (::attr/qualified-key attr))})]
   (defn to-one-picker [env attribute]
@@ -69,6 +71,7 @@
             {attr-field-options ::form/field-options
              ::attr/keys        [qualified-key]} attr
             field-options      (get field-options qualified-key)
+            extra-props        (?! (form/field-style-config env attr :input/props) env)
             target-id-key      (first (keep (fn [{k ::attr/qualified-key ::attr/keys [target]}]
                                               (when (= k qualified-key) target)) attributes))
             {:keys                 [style]
@@ -92,22 +95,24 @@
             {:style {:marginTop "0"}}
             (if (= style :dropdown)
               (ui-wrapped-dropdown
-                {:value    current-selection
-                 :multiple true
-                 :disabled read-only?
-                 :options  options
-                 :onChange (fn [v] (form/input-changed! env qualified-key v))})
+                (merge extra-props
+                  {:value    current-selection
+                   :multiple true
+                   :disabled read-only?
+                   :options  options
+                   :onChange (fn [v] (form/input-changed! env qualified-key v))}))
               (map (fn [{:keys [text value]}]
                      (let [checked? (contains? current-selection value)]
                        (div :.item {:key value}
                          (div :.content {}
                            (div :.ui.toggle.checkbox {:style {:marginTop "0"}}
                              (dom/input
-                               {:type     "checkbox"
-                                :checked  checked?
-                                :onChange #(if-not checked?
-                                             (form/input-changed! env qualified-key (vec (conj current-selection value)))
-                                             (form/input-changed! env qualified-key (vec (disj current-selection value))))})
+                               (merge extra-props
+                                 {:type     "checkbox"
+                                  :checked  checked?
+                                  :onChange #(if-not checked?
+                                               (form/input-changed! env qualified-key (vec (conj current-selection value)))
+                                               (form/input-changed! env qualified-key (vec (disj current-selection value))))}))
                              (dom/label text))))))
                 options))))))))
 
