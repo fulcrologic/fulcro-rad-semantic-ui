@@ -65,10 +65,10 @@
                            :multiple           (boolean multiple)}
                           props
                           {:value       value
-                           :searchInput (fn [SearchInput ^js js-props]
-                                          ;; HACK for Chrome
-                                          (set! (.-autoComplete js-props) "no-autocomplete")
-                                          (dom/create-element SearchInput js-props))
+                           :searchInput #js {:children (fn [SearchInput ^js js-props]
+                                                         ;; HACK for Chrome
+                                                         (set! (.-autoComplete js-props) "no-autocomplete")
+                                                         (dom/create-element SearchInput js-props))}
                            :options     options
                            :onChange    (fn [e v]
                                           (try
