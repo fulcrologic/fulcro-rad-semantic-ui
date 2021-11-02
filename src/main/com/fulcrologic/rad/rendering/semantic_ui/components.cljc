@@ -79,7 +79,7 @@
                                               (when userOnChange
                                                 (userOnChange value)))
                                             (catch :default e
-                                              (log/error "Unable to read dropdown value " e (when v (.-value v))))))})]
+                                              (log/debug "Unable to read dropdown value " e (when v (.-value v))))))})]
        (ui-dropdown props))
      :clj
      (dom/div :.ui.selection.dropdown
