@@ -9,7 +9,6 @@
     [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
     [com.fulcrologic.rad.attributes :as attr]
     [taoensso.timbre :as log]
-    [com.fulcrologic.rad.ui-validation :as validation]
     [com.fulcrologic.rad.blob :as blob]
     [com.fulcrologic.rad.options-util :refer [?! narrow-keyword]]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
@@ -100,8 +99,8 @@
         {:keys [save-ref on-change on-click]} (comp/get-state this)
         dirty?             (if read-only? false (fs/dirty? props qualified-key))
         label              (form/field-label env attribute)
-        invalid?           (if read-only? false (validation/invalid-attribute-value? env attribute))
-        validation-message (when invalid? (validation/validation-error-message env attribute))]
+        invalid?           (if read-only? false (form/invalid-attribute-value? env attribute))
+        validation-message (when invalid? (form/validation-error-message env attribute))]
     (div :.field {:key (str qualified-key)}
       (dom/label label)
       (cond

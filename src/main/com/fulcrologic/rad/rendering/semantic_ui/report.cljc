@@ -52,7 +52,7 @@
 
 (comp/defsc TableRowLayout [_ {:keys [report-instance props] :as rp}]
   {}
-  (let [{::report/keys [columns link links]} (comp/component-options report-instance)
+  (let [{::report/keys [columns link links on-select-row]} (comp/component-options report-instance)
         links          (or links link)
         action-buttons (row-action-buttons report-instance props)
         {:keys         [highlighted?]
@@ -62,6 +62,7 @@
              :onClick (fn [evt]
                         (evt/stop-propagation! evt)
                         (when-not (false? (suo/get-rendering-options report-instance suo/selectable-table-rows?))
+                          (?! on-select-row report-instance props)
                           (report/select-row! report-instance idx)))}
       (map-indexed
         (fn [idx {::attr/keys [qualified-key] :as column}]

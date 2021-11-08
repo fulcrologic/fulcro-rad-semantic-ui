@@ -7,7 +7,6 @@
         :clj
         [[com.fulcrologic.fulcro.dom-server :as dom :refer [div label input]]])
     [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
-    [com.fulcrologic.rad.ui-validation :as validation]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
@@ -57,7 +56,7 @@
   (when (form/field-visible? form-instance attribute)
     (let [props      (comp/props form-instance)
           read-only? (form/read-only? form-instance attribute)
-          invalid?   (validation/invalid-attribute-value? env attribute)
+          invalid?   (form/invalid-attribute-value? env attribute)
           user-props (?! (form/field-style-config env attribute :input/props) env)
           options    (or (?! computed-options env) (enumerated-options env attribute))
           value      (get props qualified-key)]

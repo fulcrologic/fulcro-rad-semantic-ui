@@ -8,7 +8,6 @@
         :clj
         [[com.fulcrologic.fulcro.dom-server :as dom :refer [div label input]]])
     [com.fulcrologic.rad.ids :as ids]
-    [com.fulcrologic.rad.ui-validation :as validation]
     [com.fulcrologic.fulcro.rendering.multiple-roots-renderer :as mroot]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     [com.fulcrologic.fulcro.data-fetch :as df]
@@ -126,8 +125,8 @@
         id                 (comp/get-state this :field-id)
         label              (form/field-label env attribute)
         read-only?         (form/read-only? form-instance attribute)
-        invalid?           (validation/invalid-attribute-value? env attribute)
-        validation-message (when invalid? (validation/validation-error-message env attribute))
+        invalid?           (form/invalid-attribute-value? env attribute)
+        validation-message (when invalid? (form/validation-error-message env attribute))
         field              (get-in props [::autocomplete-id id])]
     ;; Have to pass the id and debounce early since the merge in mount won't happen until after, which is too late for initial
     ;; state

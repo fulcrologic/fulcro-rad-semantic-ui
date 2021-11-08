@@ -3,7 +3,6 @@
     [com.fulcrologic.fulcro-i18n.i18n :refer [tr trc]]
     [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.rad.options-util :refer [?! narrow-keyword]]
-    [com.fulcrologic.rad.ui-validation :as validation]
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.rad.blob :as blob]
@@ -30,9 +29,9 @@
         delete?             (fn [item] (and (not read-only?) (?! can-delete? form-instance item)))
         items               (get form-instance-props k)
         title               (?! (or title (some-> ui (comp/component-options ::form/title)) "") form-instance form-instance-props)
-        invalid?            (validation/invalid-attribute-value? env attr)
+        invalid?            (form/invalid-attribute-value? env attr)
         visible?            (form/field-visible? form-instance attr)
-        validation-message  (validation/validation-error-message env attr)
+        validation-message  (form/validation-error-message env attr)
         add                 (when (or (nil? add?) add?)
                               (let [order (if (keyword? add?) add? :append)]
                                 (if (?! added-via-upload? env)
@@ -53,11 +52,7 @@
                                                             (blob/upload-file! form-instance sha-attr js-file {:file-ident [id-key new-id]})))})
                                   (button :.ui.tiny.icon.button
                                     {:onClick (fn [_]
-                                                (form/add-child! (assoc env
-                                                                   ::form/order order
-                                                                   ::form/parent-relation k
-                                                                   ::form/parent form-instance
-                                                                   ::form/child-class ui)))}
+                                                (form/add-child! form-instance k ui {::form/order order}))}
                                     (i :.plus.icon)))))
         ui-factory          (comp/computed-factory ui {:keyfn (fn [item] (-> ui (comp/get-ident item) second str))})]
     (when visible?
@@ -87,8 +82,8 @@
         title              (?! (or title (some-> ui (comp/component-options ::form/title)) "") form-instance form-props)
         ui-factory         (comp/computed-factory ui)
         visible?           (form/field-visible? form-instance attr)
-        invalid?           (validation/invalid-attribute-value? env attr)
-        validation-message (validation/validation-error-message env attr)
+        invalid?           (form/invalid-attribute-value? env attr)
+        validation-message (form/validation-error-message env attr)
         std-props          {::form/nested?         true
                             ::form/parent          form-instance
                             ::form/parent-relation k
@@ -107,10 +102,7 @@
         (or (nil? can-add?) (?! can-add? form-instance attr))
         (div {:key (str k) :classes [(?! ref-container-class env)]}
           (h3 :.ui.header title)
-          (button :.ui.primary.button {:onClick (fn [] (form/add-child! (assoc env
-                                                                          ::form/parent-relation k
-                                                                          ::form/parent form-instance
-                                                                          ::form/child-class ui)))} (tr "Create")))))))
+          (button :.ui.primary.button {:onClick (fn [] (form/add-child! form-instance k ui))} (tr "Create")))))))
 
 (defn standard-ref-container [env {::attr/keys [cardinality] :as attr} options]
   (if (= :many cardinality)
@@ -319,8 +311,7 @@
                         :key     (str (comp/get-ident form-instance))}
           (when can-delete?
             (button :.ui.icon.primary.right.floated.button {:disabled (not can-delete?)
-                                                            :onClick  (fn []
-                                                                        (form/delete-child! env))}
+                                                            :onClick  (fn [] (form/delete-child! env))}
               (i :.times.icon)))
           (render-fields env)))
       (let [{::form/keys [title action-buttons controls]} (comp/component-options form-instance)
@@ -364,7 +355,7 @@
         filename  (get props file-key "File")
         dirty?    (fs/dirty? props sha-key)
         failed?   (blob/failed-upload? props sha-key)
-        invalid?  (validation/invalid-attribute-value? env attribute)
+        invalid?  (form/invalid-attribute-value? env attribute)
         pct       (blob/upload-percentage props sha-key)
         sha       (get props sha-key)
         url       (get props url-key)]

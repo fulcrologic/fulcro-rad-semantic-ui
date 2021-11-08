@@ -6,7 +6,6 @@
     [com.fulcrologic.fulcro.dom.events :as evt]
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.attributes :as attr]
-    [com.fulcrologic.rad.ui-validation :as validation]
     [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
     [com.fulcrologic.rad.rendering.semantic-ui.field :refer [render-field-factory]]))
@@ -53,7 +52,7 @@
         props              (comp/props form-instance)
         value              (and attribute (get props k))
         invalid?           (not (contains? values value))
-        validation-message (when invalid? (validation/validation-error-message env attribute))
+        validation-message (when invalid? (form/validation-error-message env attribute))
         field-label        (form/field-label env attribute)
         read-only?         (form/read-only? form-instance attribute)]
     (div :.ui.field {:key (str k)}

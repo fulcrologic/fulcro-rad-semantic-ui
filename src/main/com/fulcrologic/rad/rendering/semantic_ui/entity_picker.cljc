@@ -10,7 +10,6 @@
     [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.picker-options :as picker-options]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
-    [com.fulcrologic.rad.ui-validation :as validation]
     [taoensso.timbre :as log]))
 
 (defsc ToOnePicker [this {:keys [env attr]}]
@@ -36,7 +35,7 @@
             value         [target-id-key (get-in props [qualified-key target-id-key])]
             field-label   (form/field-label env attr)
             read-only?    (or (form/read-only? master-form attr) (form/read-only? form-instance attr))
-            invalid?      (and (not read-only?) (validation/invalid-attribute-value? env attr))
+            invalid?      (and (not read-only?) (form/invalid-attribute-value? env attr))
             extra-props   (?! (form/field-style-config env attr :input/props) env)
             onSelect      (fn [v]
                             (form/input-changed! env qualified-key v))]
@@ -86,9 +85,9 @@
                                            [target-id-key id])))
                                  (get props qualified-key))
             field-label        (form/field-label env attr)
-            invalid?           (validation/invalid-attribute-value? env attr)
+            invalid?           (form/invalid-attribute-value? env attr)
             read-only?         (form/read-only? form-instance attr)
-            validation-message (when invalid? (validation/validation-error-message env attr))]
+            validation-message (when invalid? (form/validation-error-message env attr))]
         (div :.ui.field {:classes [(when invalid? "error")]}
           (dom/label field-label " " (when invalid? validation-message))
           (div :.ui.middle.aligned.celled.list.big
