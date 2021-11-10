@@ -6,6 +6,7 @@
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.rad.blob :as blob]
+    [com.fulcrologic.rad.debugging :as debug]
     [com.fulcrologic.fulcro.dom.events :as evt]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     [com.fulcrologic.fulcro.application :as app]
@@ -320,6 +321,7 @@
         (div {:key       (str (comp/get-ident form-instance))
               :className (or
                            (?! (suo/get-rendering-options form-instance suo/layout-class) env)
+                           (?! (comp/component-options form-instance suo/layout-class) env)
                            (?! (comp/component-options form-instance ::top-level-class) env)
                            "ui container")}
           (div {:className (or
@@ -339,11 +341,15 @@
 (def standard-form-container (comp/factory StandardFormContainer))
 
 (defn standard-form-layout-renderer [{::form/keys [form-instance] :as env}]
-  (let [{::form/keys [attributes layout tabbed-layout] :as options} (comp/component-options form-instance)]
-    (cond
-      (vector? layout) (render-layout env options)
-      (vector? tabbed-layout) (ui-tabbed-layout env options)
-      :else (mapv (fn [attr] (render-attribute env attr options)) attributes))))
+  (let [{::form/keys [attributes layout tabbed-layout debug?] :as options} (comp/component-options form-instance)
+        layout (cond
+                 (vector? layout) (render-layout env options)
+                 (vector? tabbed-layout) (ui-tabbed-layout env options)
+                 :else (mapv (fn [attr] (render-attribute env attr options)) attributes))]
+    (if (and #?(:clj false :cljs goog.DEBUG) debug?)
+      (debug/side-by-side-debugger form-instance (comp/props form-instance)
+        (constantly layout))
+      layout)))
 
 (defn- file-icon-renderer* [{::form/keys [form-instance] :as env}]
   (let [{::form/keys [attributes] :as options} (comp/component-options form-instance)
