@@ -27,7 +27,8 @@
   "Display the date the user selects, but control a value that is midnight on the next date. Used for generating ending
   instants that can be used for a proper non-inclusive end date."
   [_ {:keys [value onChange] :as props}]
-  (let [today        (dt/inst->local-datetime (or value (dt/now)))
+  (let [today        (or (some-> value dt/inst->local-datetime)
+                         (ld/at-start-of-day (ldt/plus-days (ld/now) 1)))
         display-date (ldt/to-local-date (ldt/minus-days today 1))
         value        (dt/local-date->html-date-string display-date)]
     (dom/input
@@ -37,8 +38,7 @@
          :onChange (fn [evt]
                      (when onChange
                        (let [date-string (evt/target-value evt)
-                             tomorrow    (ld/at-time (ld/plus-days (dt/html-date-string->local-date date-string) 1)
-                                           lt/midnight)
+                             tomorrow    (ld/at-start-of-day (ld/plus-days (dt/html-date-string->local-date date-string) 1))
                              instant     (dt/local-datetime->inst tomorrow)]
                          (onChange instant))))}))))
 
