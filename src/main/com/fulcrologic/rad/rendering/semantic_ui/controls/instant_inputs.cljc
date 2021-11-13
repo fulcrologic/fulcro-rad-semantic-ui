@@ -11,7 +11,7 @@
     [cljc.java-time.local-date :as ld]))
 
 (defn ui-date-instant-input [{::keys [default-local-time]} {:keys [value onChange local-time] :as props}]
-  (let [value      (dt/inst->html-date (or value (dt/now)))
+  (let [value      (if (nil? value) "" (dt/inst->html-date value))
         local-time (or local-time default-local-time)]
     (dom/input
       (merge props
@@ -27,9 +27,13 @@
   "Display the date the user selects, but control a value that is midnight on the next date. Used for generating ending
   instants that can be used for a proper non-inclusive end date."
   [_ {:keys [value onChange] :as props}]
-  (let [today        (dt/inst->local-datetime (or value (dt/now)))
-        display-date (ldt/to-local-date (ldt/minus-days today 1))
-        value        (dt/local-date->html-date-string display-date)]
+  (let [value        (if (nil? value)
+                       ""
+                       (-> value
+                           dt/inst->local-datetime
+                           (ldt/minus-days 1)
+                           ldt/to-local-date
+                           dt/local-date->html-date-string))]
     (dom/input
       (merge props
         {:value    value
@@ -43,7 +47,7 @@
                          (onChange instant))))}))))
 
 (defn ui-date-time-instant-input [_ {:keys [disabled? value onChange] :as props}]
-  (let [value (dt/inst->html-datetime-string (or value (dt/now)))]
+  (let [value (if (nil? value) "" (dt/inst->html-datetime-string value))]
     (dom/input
       (merge props
         (cond->
