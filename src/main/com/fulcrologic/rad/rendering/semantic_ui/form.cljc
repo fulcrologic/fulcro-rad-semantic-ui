@@ -347,7 +347,7 @@
                  (vector? tabbed-layout) (ui-tabbed-layout env options)
                  :else (mapv (fn [attr] (render-attribute env attr options)) attributes))]
     (if (and #?(:clj false :cljs goog.DEBUG) debug?)
-      (debug/side-by-side-debugger form-instance (comp/props form-instance)
+      (debug/top-bottom-debugger form-instance (comp/props form-instance)
         (constantly layout))
       layout)))
 
