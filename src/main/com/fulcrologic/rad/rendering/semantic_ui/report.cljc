@@ -40,14 +40,13 @@
                                    :disabled? disabled?})
                   label         (?! label report-instance row-props control-props)]
               (when (or (nil? visible?) (?! visible? report-instance row-props))
-                (if report-row-button-renderer
-                  (report-row-button-renderer report-instance row-props control-props)
-                  (if (string? label)
-                    (dom/button :.ui.button {:key      idx
-                                             :disabled disabled?
-                                             :onClick  onClick}
-                      label)
-                    label)))))
+                (if-let [render-button (?! report-row-button-renderer report-instance row-props control-props)]
+                    render-button
+                    (if (string? label)
+                        (dom/button :.ui.button {:key      idx
+                                                 :disabled disabled?
+                                                 :onClick  onClick}
+                    label))))))
           row-actions)))))
 
 (comp/defsc TableRowLayout [_ {:keys [report-instance props] :as rp}]
