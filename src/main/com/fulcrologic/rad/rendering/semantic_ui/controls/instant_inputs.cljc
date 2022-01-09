@@ -40,11 +40,11 @@
          :type     "date"
          :onChange (fn [evt]
                      (when onChange
-                       (let [date-string (evt/target-value evt)
-                             tomorrow    (ld/at-time (ld/plus-days (dt/html-date-string->local-date date-string) 1)
-                                           lt/midnight)
-                             instant     (dt/local-datetime->inst tomorrow)]
-                         (onChange instant))))}))))
+                       (onChange (some-> (evt/target-value evt)
+                                         (dt/html-date-string->local-date)
+                                         (ld/plus-days 1)
+                                         (ld/at-time lt/midnight)
+                                         (dt/local-datetime->inst)))))}))))
 
 (defn ui-date-time-instant-input [_ {:keys [disabled? value onChange] :as props}]
   (let [value (if (nil? value) "" (dt/inst->html-datetime-string value))]
