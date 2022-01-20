@@ -31,13 +31,13 @@
   (action [{:keys [state]}]
     #?(:clj true
        :cljs
-            (let [options            (get @state source)
-                  normalized-options (apply array
-                                       (map (fn [{:keys [text value]}]
-                                              #js {:text text :value (pr-str value)}) options))]
-              (fns/swap!-> state
-                (dissoc source)
-                (assoc-in target normalized-options))))))
+       (let [options            (get @state source)
+             normalized-options (apply array
+                                  (map (fn [{:keys [text value]}]
+                                         #js {:text text :value (pr-str value)}) options))]
+         (fns/swap!-> state
+           (dissoc source)
+           (assoc-in target normalized-options))))))
 
 (defsc AutocompleteField [this {:ui/keys [search-string options] :as props} {:keys [value label onChange
                                                                                     invalid? validation-message
@@ -57,14 +57,18 @@
                                     (or debounce-ms 200))}))
    :componentDidMount (fn [this]
                         (let [{id                 ::autocomplete-id
-                               :autocomplete/keys [search-key]} (comp/props this)
+                               :autocomplete/keys [search-key preload?]} (comp/props this)
                               value (comp/get-computed this :value)]
-                          (when (and search-key value)
-                            (df/load! this search-key AutocompleteQuery
-                              {:params               {:only value}
-                               :post-mutation        `normalize-options
-                               :post-mutation-params {:source search-key
-                                                      :target [::autocomplete-id id :ui/options]}}))))
+                          (cond
+                            preload? (df/load! this search-key AutocompleteQuery
+                                       {:post-mutation        `normalize-options
+                                        :post-mutation-params {:source search-key
+                                                               :target [::autocomplete-id id :ui/options]}})
+                            (and search-key value) (df/load! this search-key AutocompleteQuery
+                                                     {:params               {:only value}
+                                                      :post-mutation        `normalize-options
+                                                      :post-mutation-params {:source search-key
+                                                                             :target [::autocomplete-id id :ui/options]}}))))
    :query             [::autocomplete-id :ui/search-string :ui/options :autocomplete/search-key
                        :autocomplete/debounce-ms :autocomplete/minimum-input]
    :ident             ::autocomplete-id}
@@ -118,7 +122,7 @@
                             (comp/transact! this [(gc-autocomplete {:id (comp/get-state this :field-id)})])
                             (mroot/deregister-root! this))
    :query                 [::autocomplete-id]}
-  (let [{:autocomplete/keys [debounce-ms search-key]} (::form/field-options attribute)
+  (let [{:autocomplete/keys [debounce-ms search-key preload?]} (::form/field-options attribute)
         k                  (::attr/qualified-key attribute)
         {::form/keys [form-instance]} env
         value              (-> (comp/props form-instance) (get k))
@@ -133,6 +137,7 @@
     (ui-autocomplete-field (assoc field
                              ::autocomplete-id id
                              :autocomplete/search-key search-key
+                             :autocomplete/preload? preload?
                              :autocomplete/debounce-ms debounce-ms)
       {:value              value
        :invalid?           invalid?
