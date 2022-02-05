@@ -1,23 +1,24 @@
 (ns com.fulcrologic.rad.rendering.semantic-ui.report
   (:require
-    [com.fulcrologic.fulcro-i18n.i18n :refer [tr trc]]
-    [clojure.string :as str]
-    [com.fulcrologic.rad.attributes :as attr]
-    [com.fulcrologic.rad.report :as report]
-    [com.fulcrologic.rad.control :as control]
-    [com.fulcrologic.fulcro.components :as comp]
-    [com.fulcrologic.rad.semantic-ui-options :as suo]
     #?@(:cljs
         [[com.fulcrologic.fulcro.dom :as dom :refer [div]]
+         [com.fulcrologic.semantic-ui.modules.popup.ui-popup :refer [ui-popup]]
+         [com.fulcrologic.semantic-ui.modules.popup.ui-popup-content :refer [ui-popup-content]]
          [com.fulcrologic.semantic-ui.addons.pagination.ui-pagination :as sui-pagination]]
         :clj
         [[com.fulcrologic.fulcro.dom-server :as dom :refer [div]]])
-    [com.fulcrologic.fulcro.data-fetch :as df]
-    [com.fulcrologic.rad.rendering.semantic-ui.form :as sui-form]
-    [taoensso.timbre :as log]
-    [com.fulcrologic.rad.options-util :refer [?!]]
+    [clojure.string :as str]
+    [com.fulcrologic.fulcro.components :as comp]
+    [com.fulcrologic.fulcro.dom.events :as evt]
+    [com.fulcrologic.fulcro.dom.html-entities :as ent]
+    [com.fulcrologic.fulcro-i18n.i18n :refer [tr trc]]
+    [com.fulcrologic.rad.attributes :as attr]
+    [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.rad.form :as form]
-    [com.fulcrologic.fulcro.dom.events :as evt]))
+    [com.fulcrologic.rad.options-util :refer [?!]]
+    [com.fulcrologic.rad.rendering.semantic-ui.form :as sui-form]
+    [com.fulcrologic.rad.report :as report]
+    [com.fulcrologic.rad.semantic-ui-options :as suo]))
 
 (defn row-action-buttons [report-instance row-props]
   (let [{::report/keys [row-actions]} (comp/component-options report-instance)
@@ -205,11 +206,15 @@
 
 (defn render-standard-table [this {:keys [report-instance]}]
   (let [{report-column-headings ::report/column-headings
+         report-column-infos    ::report/column-infos
          ::report/keys          [columns row-actions BodyItem compare-rows table-class]} (comp/component-options report-instance)
         render-report-body-item ((comp/get-state this :row-factory) BodyItem)
-        column-headings         (mapv (fn [{::report/keys [column-heading]
+        column-headings         (mapv (fn [{::report/keys [column-heading column-info]
                                             ::attr/keys   [qualified-key] :as attr}]
                                         {:column attr
+                                         :help   (or
+                                                   (?! (get report-column-infos qualified-key) report-instance)
+                                                   (?! column-info report-instance))
                                          :label  (or
                                                    (?! (get report-column-headings qualified-key) report-instance)
                                                    (?! column-heading report-instance)
@@ -234,18 +239,24 @@
     (dom/table {:className (or sui-table-class "ui selectable table") :classes [table-class]}
       (dom/thead
         (dom/tr
-          (map-indexed (fn [idx {:keys [label column]}]
+          (map-indexed (fn [idx {:keys [label help column]}]
                          (dom/th {:key     idx
                                   :classes [(?! sui-header-class report-instance idx)]}
                            (if (sortable? column)
                              (dom/a {:onClick (fn [evt]
                                                 (evt/stop-propagation! evt)
-                                                (report/sort-rows! report-instance column))} (str label)
+                                                (report/sort-rows! report-instance column))}
+                               (str label)
                                (when (= sorting-by (::attr/qualified-key column))
                                  (if ascending?
                                    (dom/i :.angle.down.icon)
                                    (dom/i :.angle.up.icon))))
-                             (str label))))
+                             (str label))
+                           #?(:cljs
+                              (when help
+                                (ui-popup {:trigger (dom/i :.ui.circle.info.icon)}
+                                  (ui-popup-content {}
+                                    help))))))
             column-headings)
           (when has-row-actions? (dom/th {:classes [(or
                                                       (?! sui-header-class report-instance (count column-headings))
