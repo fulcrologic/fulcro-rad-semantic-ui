@@ -25,15 +25,14 @@
               {:text  (?! (get enumeration-labels k (name k)))
                :value k}) enumerated-values))))
 
-(defn- render-to-many [{::form/keys [form-instance] :as env} {::form/keys [field-label]
-                                                              ::attr/keys [qualified-key computed-options] :as attribute}]
+(defn- render-to-many [{::form/keys [form-instance] :as env} {::attr/keys [qualified-key computed-options] :as attribute}]
   (when (form/field-visible? form-instance attribute)
     (let [props        (comp/props form-instance)
           read-only?   (form/read-only? form-instance attribute)
           options      (or (?! computed-options env) (enumerated-options env attribute))
           selected-ids (set (get props qualified-key))]
       (div :.ui.field {:key (str qualified-key)}
-        (label (or field-label (some-> qualified-key name str/capitalize)))
+        (label (form/field-label env attribute))
         (div :.ui.middle.aligned.celled.list.big {:style {:marginTop "0"}}
           (map (fn [{:keys [text value]}]
                  (let [checked? (contains? selected-ids value)]
@@ -51,8 +50,7 @@
                          (dom/label text))))))
             options))))))
 
-(defn- render-to-one [{::form/keys [form-instance] :as env} {::form/keys [field-label]
-                                                             ::attr/keys [qualified-key computed-options required?] :as attribute}]
+(defn- render-to-one [{::form/keys [form-instance] :as env} {::attr/keys [qualified-key computed-options required?] :as attribute}]
   (when (form/field-visible? form-instance attribute)
     (let [props      (comp/props form-instance)
           read-only? (form/read-only? form-instance attribute)
@@ -61,8 +59,8 @@
           options    (or (?! computed-options env) (enumerated-options env attribute))
           value      (get props qualified-key)]
       (div :.ui.field {:key (str qualified-key) :classes [(when invalid? "error")]}
-        (label (str (or (?! field-label form-instance) (some-> qualified-key name str/capitalize))
-                 (when invalid? (str " (" (tr "Required") ")"))))
+        (label (str (form/field-label env attribute)
+               (when invalid? (str " (" (tr "Required") ")"))))
         (if read-only?
           (let [value (first (filter #(= value (:value %)) options))]
             (dom/input {:readOnly "readonly"
