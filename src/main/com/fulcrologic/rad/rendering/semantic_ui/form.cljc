@@ -55,9 +55,12 @@
                                     {:onClick (fn [_]
                                                 (form/add-child! form-instance k ui {::form/order order}))}
                                     (i :.plus.icon)))))
-        ui-factory          (comp/computed-factory ui {:keyfn (fn [item] (-> ui (comp/get-ident item) second str))})]
+        ui-factory          (comp/computed-factory ui {:keyfn (fn [item] (-> ui (comp/get-ident item) second str))})
+        body-class          (or
+                              (?! (comp/component-options form-instance suo/body-class) form-instance)
+                              "ui container")]
     (when visible?
-      (div :.ui.container {:key (str k)}
+      (div {:className body-class :key (str k)}
         (h3 title (span ent/nbsp ent/nbsp) (when (or (nil? add-position) (= :top add-position)) add))
         (when invalid?
           (div :.ui.error.message

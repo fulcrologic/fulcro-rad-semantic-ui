@@ -124,6 +124,10 @@
   "
   ::report-table-cell-class)
 
+(def form-element-classes
+  "A map from qualified key to class names. OVERRIDES the class name of the container on the form field."
+  ::form-element-classes)
+
 (def selectable-table-rows?
   "A boolean. When true the table will support click on a row to affix a highlight to that row."
   ::selectable-table-rows?)
