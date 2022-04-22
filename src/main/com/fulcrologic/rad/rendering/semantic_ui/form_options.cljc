@@ -1,4 +1,7 @@
-(ns com.fulcrologic.rad.rendering.semantic-ui.form-options)
+(ns com.fulcrologic.rad.rendering.semantic-ui.form-options
+  (:require
+    [com.fulcrologic.rad.attributes :as attr]
+    [com.fulcrologic.fulcro.components :as comp]))
 
 (def ref-container-class
   "This option can be used in the ::fo/subforms entries to indicate what class(es) should be set on the element that wraps
@@ -38,3 +41,20 @@
 
    See also `fo/input-props`."
   :input/props)
+
+(def element-classes
+  "A map from qualified key to class names. OVERRIDES the class name of the container on the form field."
+  :com.fulcrologic.rad.rendering.semantic-ui.form/element-classes)
+
+(def element-class
+  "Attribute option. A string that defines a CSS class for the outer-most DOM element of a form
+   field that renders this attribute. OVERRIDES the class name of the container on the form field."
+  :com.fulcrologic.rad.rendering.semantic-ui.form/element-class)
+
+(defn top-class
+  "Looks for the top-level form element class on the given attribute or form instance. See
+   `form-element-classes` and `form-element-class`."
+  [form-instance {::attr/keys [qualified-key] :as attribute}]
+  (or
+    (comp/component-options form-instance element-classes qualified-key)
+    (get attribute element-class)))

@@ -23,6 +23,7 @@
   where the `options` is a map of option keys/values.
   "
   (:require
+    [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.fulcro.components :as comp]))
 
 (def rendering-options
@@ -123,10 +124,6 @@
 
   "
   ::report-table-cell-class)
-
-(def form-element-classes
-  "A map from qualified key to class names. OVERRIDES the class name of the container on the form field."
-  ::form-element-classes)
 
 (def selectable-table-rows?
   "A boolean. When true the table will support click on a row to affix a highlight to that row."

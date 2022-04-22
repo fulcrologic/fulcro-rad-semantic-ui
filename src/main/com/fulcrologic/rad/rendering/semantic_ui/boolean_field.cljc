@@ -9,6 +9,7 @@
     [clojure.string :as str]
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.options-util :refer [?!]]
+    [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
     [com.fulcrologic.fulcro.dom.events :as evt]))
 
 (defn render-field [{::form/keys [form-instance] :as env} attribute]
@@ -18,18 +19,20 @@
         field-label (form/field-label env attribute)
         visible?    (form/field-visible? form-instance attribute)
         read-only?  (form/read-only? form-instance attribute)
+        top-class   (sufo/top-class form-instance attribute)
         value       (get props k false)]
     (when visible?
-      (div :.ui.field {:key (str k)}
-           (div :.ui.checkbox
-                (input (merge
-                        {:checked  value
-                         :type     "checkbox"
-                         :disabled (boolean read-only?)
-                         :onChange (fn [evt]
-                                     (let [v (not value)]
-                                       (form/input-blur! env k v)
-                                       (form/input-changed! env k v)))}
-                        user-props))
-                (label field-label))))))
+      (div {:className (or top-class "ui field")
+            :key       (str k)}
+        (div :.ui.checkbox
+          (input (merge
+                   {:checked  value
+                    :type     "checkbox"
+                    :disabled (boolean read-only?)
+                    :onChange (fn [evt]
+                                (let [v (not value)]
+                                  (form/input-blur! env k v)
+                                  (form/input-changed! env k v)))}
+                   user-props))
+          (label field-label))))))
 

@@ -11,6 +11,7 @@
     [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
     [com.fulcrologic.rad.attributes :as attr]
+    [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
     [clojure.string :as str]
     [com.fulcrologic.rad.form :as form]))
 
@@ -30,8 +31,10 @@
     (let [props        (comp/props form-instance)
           read-only?   (form/read-only? form-instance attribute)
           options      (or (?! computed-options env) (enumerated-options env attribute))
+          top-class    (sufo/top-class form-instance attribute)
           selected-ids (set (get props qualified-key))]
-      (div :.ui.field {:key (str qualified-key)}
+      (div {:className (or top-class "ui field")
+            :key       (str qualified-key)}
         (label (form/field-label env attribute))
         (div :.ui.middle.aligned.celled.list.big {:style {:marginTop "0"}}
           (map (fn [{:keys [text value]}]
@@ -57,10 +60,12 @@
           invalid?   (form/invalid-attribute-value? env attribute)
           user-props (?! (form/field-style-config env attribute :input/props) env)
           options    (or (?! computed-options env) (enumerated-options env attribute))
+          top-class  (sufo/top-class form-instance attribute)
           value      (get props qualified-key)]
-      (div :.ui.field {:key (str qualified-key) :classes [(when invalid? "error")]}
+      (div {:className (or top-class "ui field")
+            :key       (str qualified-key) :classes [(when invalid? "error")]}
         (label (str (form/field-label env attribute)
-               (when invalid? (str " (" (tr "Required") ")"))))
+                 (when invalid? (str " (" (tr "Required") ")"))))
         (if read-only?
           (let [value (first (filter #(= value (:value %)) options))]
             (dom/input {:readOnly "readonly"

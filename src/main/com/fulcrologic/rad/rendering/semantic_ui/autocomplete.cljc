@@ -16,6 +16,7 @@
     [com.fulcrologic.rad.options-util :as opts]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
     [com.fulcrologic.rad.attributes :as attr]
+    [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
     [clojure.string :as str]
     [taoensso.timbre :as log]
     [com.fulcrologic.rad.form :as form]
@@ -41,6 +42,7 @@
 
 (defsc AutocompleteField [this {:ui/keys [search-string options] :as props} {:keys [value label onChange
                                                                                     invalid? validation-message
+                                                                                    className
                                                                                     read-only?]}]
   {:initLocalState    (fn [this]
                         ;; Possible problem???: props not making it...fix that, or debounce isn't configurable.
@@ -76,7 +78,8 @@
     #?(:clj
        (dom/div "")
        :cljs
-       (dom/div :.field {:classes [(when invalid? "error")]}
+       (dom/div :.field {:className (or className "field")
+                         :classes   [(when invalid? "error")]}
          (dom/label label (when invalid? (str " " validation-message)))
          (if read-only?
            (gobj/getValueByKeys options 0 "text")
@@ -125,6 +128,7 @@
   (let [{:autocomplete/keys [debounce-ms search-key preload?]} (::form/field-options attribute)
         k                  (::attr/qualified-key attribute)
         {::form/keys [form-instance]} env
+        top-class          (sufo/top-class form-instance attribute)
         value              (-> (comp/props form-instance) (get k))
         id                 (comp/get-state this :field-id)
         label              (form/field-label env attribute)
@@ -139,14 +143,15 @@
                              :autocomplete/search-key search-key
                              :autocomplete/preload? preload?
                              :autocomplete/debounce-ms debounce-ms)
-      {:value              value
-       :invalid?           invalid?
-       :validation-message validation-message
-       :label              label
-       :read-only?         read-only?
-       :onChange           (fn [normalized-value]
-                             #?(:cljs
-                                (when normalized-value (form/input-changed! env k normalized-value))))})))
+      (cond-> {:value              value
+               :invalid?           invalid?
+               :validation-message validation-message
+               :label              label
+               :read-only?         read-only?
+               :onChange           (fn [normalized-value]
+                                     #?(:cljs
+                                        (when normalized-value (form/input-changed! env k normalized-value))))}
+        top-class (assoc :className top-class)))))
 
 (def ui-autocomplete-field-root (mroot/floating-root-factory AutocompleteFieldRoot
                                   {:keyfn (fn [props] (-> props :attribute ::attr/qualified-key))}))

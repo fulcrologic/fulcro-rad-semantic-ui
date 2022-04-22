@@ -13,6 +13,7 @@
     [com.fulcrologic.rad.options-util :refer [?! narrow-keyword]]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
     [com.fulcrologic.rad.rendering.semantic-ui.field :refer [render-field-factory]]
+    [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
     [com.fulcrologic.fulcro.algorithms.form-state :as fs]))
 
 (defn evt->js-files [evt]
@@ -84,24 +85,16 @@
                                                attribute (comp/get-computed this)
                                                file      (-> evt evt->js-files first)]
                                            (blob/upload-file! this attribute file {:file-ident []})))}))}
-  (let [props              (comp/props form-instance)
-        read-only?         (or
-                             (form/read-only? master-form attribute)
-                             (form/read-only? form-instance attribute))
-        can-change?        (if read-only? false (?! can-change? env attribute))
-        url-key            (blob/url-key qualified-key)
-        name-key           (blob/filename-key qualified-key)
-        current-sha        (get props qualified-key)
-        url                (get props url-key)
-        filename           (get props name-key)
-        pct                (blob/upload-percentage props qualified-key)
-        has-current-value? (seq current-sha)
-        {:keys [save-ref on-change on-click]} (comp/get-state this)
-        dirty?             (if read-only? false (fs/dirty? props qualified-key))
-        label              (form/field-label env attribute)
-        invalid?           (if read-only? false (form/invalid-attribute-value? env attribute))
-        validation-message (when invalid? (form/validation-error-message env attribute))]
-    (div :.field {:key (str qualified-key)}
+  (let [props     (comp/props form-instance)
+        url-key   (blob/url-key qualified-key)
+        name-key  (blob/filename-key qualified-key)
+        url       (get props url-key)
+        filename  (get props name-key)
+        pct       (blob/upload-percentage props qualified-key)
+        label     (form/field-label env attribute)
+        top-class (sufo/top-class form-instance attribute)]
+    (div {:className (or top-class "field")
+          :key       (str qualified-key)}
       (dom/label label)
       (cond
         (blob/blob-downloadable? props qualified-key)

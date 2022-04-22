@@ -9,7 +9,7 @@
     [com.fulcrologic.fulcro.dom.html-entities :as ent]
     [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.form :as form]
-    [com.fulcrologic.rad.semantic-ui-options :as suo]
+    [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
     [taoensso.timbre :as log]))
 
 (defn render-field-factory
@@ -26,7 +26,7 @@
                                             (merge addl-props)
                                             (cond->
                                               read-only? (assoc :readOnly "readonly")))]
-       (let [top-class (comp/component-options form-instance suo/form-element-classes qualified-key)]
+       (let [top-class (sufo/top-class form-instance attribute)]
          (when visible?
            (div {:key     (str qualified-key)
                  :classes [(or top-class "ui field") (when invalid? "error")]}

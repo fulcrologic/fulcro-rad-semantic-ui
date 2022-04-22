@@ -8,6 +8,7 @@
     [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
+    [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
     [com.fulcrologic.rad.rendering.semantic-ui.field :refer [render-field-factory]]))
 
 (defn- with-handlers [type {:keys [value onChange onBlur] :as props}]
@@ -54,8 +55,10 @@
         invalid?           (not (contains? values value))
         validation-message (when invalid? (form/validation-error-message env attribute))
         field-label        (form/field-label env attribute)
+        top-class          (sufo/top-class form-instance attribute)
         read-only?         (form/read-only? form-instance attribute)]
-    (div :.ui.field {:key (str k)}
+    (div {:className (or top-class "ui field")
+          :key       (str k)}
       (label field-label (when invalid? (str " (" validation-message ")")))
       (ui-wrapped-dropdown
         (merge

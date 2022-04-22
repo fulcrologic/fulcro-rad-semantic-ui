@@ -18,6 +18,7 @@
     [com.fulcrologic.fulcro.algorithms.merge :as merge]
     [taoensso.encore :as enc]
     [taoensso.timbre :as log]
+    [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
     [com.fulcrologic.rad.semantic-ui-options :as suo]))
 
 (defn render-to-many [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
@@ -56,9 +57,8 @@
                                                 (form/add-child! form-instance k ui {::form/order order}))}
                                     (i :.plus.icon)))))
         ui-factory          (comp/computed-factory ui {:keyfn (fn [item] (-> ui (comp/get-ident item) second str))})
-        body-class          (or
-                              (?! (comp/component-options form-instance suo/body-class) form-instance)
-                              "ui container")]
+        top-class           (sufo/top-class form-instance attr)
+        body-class          (or top-class "ui container")]
     (when visible?
       (div {:className body-class :key (str k)}
         (h3 title (span ent/nbsp ent/nbsp) (when (or (nil? add-position) (= :top add-position)) add))
@@ -88,6 +88,7 @@
         visible?           (form/field-visible? form-instance attr)
         invalid?           (form/invalid-attribute-value? env attr)
         validation-message (form/validation-error-message env attr)
+        top-class          (or (sufo/top-class form-instance attr) "")
         std-props          {::form/nested?         true
                             ::form/parent          form-instance
                             ::form/parent-relation k
@@ -97,14 +98,18 @@
     (when visible?
       (cond
         props
-        (div {:key (str k) :classes [(?! ref-container-class env)]}
+        (div {:key       (str k)
+              :className top-class
+              :classes   [(?! ref-container-class env)]}
           (h3 :.ui.header title)
           (when invalid?
             (div :.ui.error.message validation-message))
           (ui-factory props (merge env std-props)))
 
         (or (nil? can-add?) (?! can-add? form-instance attr))
-        (div {:key (str k) :classes [(?! ref-container-class env)]}
+        (div {:key       (str k)
+              :className top-class
+              :classes   [(?! ref-container-class env)]}
           (h3 :.ui.header title)
           (button :.ui.primary.button {:onClick (fn [] (form/add-child! form-instance k ui))} (tr "Create")))))))
 
@@ -121,6 +126,7 @@
         ui-factory (comp/computed-factory ui)
         label      (form/field-label env attr)
         visible?   (form/field-visible? form-instance attr)
+        top-class  (sufo/top-class form-instance attr)
         std-props  {::form/nested?         true
                     ::form/parent          form-instance
                     ::form/parent-relation k
@@ -129,10 +135,12 @@
                                              false)}]
     (when visible?
       (if props
-        (div :.field {:key (str k)}
+        (div {:className (or top-class "field")
+              :key       (str k)}
           (dom/label label)
           (ui-factory props (merge env std-props)))
-        (div {:key (str k)}
+        (div {:className (or top-class "")
+              :key       (str k)}
           (div (tr "Upload??? (TODO)")))))))
 
 (defsc ManyFiles [this {{::form/keys [form-instance master-form] :as env} :env
@@ -181,9 +189,11 @@
                                                           (blob/upload-file! form-instance sha-attr js-file {:file-ident [id-key new-id]})
                                                           (comp/set-state! this {:input-key (str (rand-int 1000000))})))})))
         visible?            (form/field-visible? form-instance attr)
+        top-class           (sufo/top-class form-instance attr)
         ui-factory          (comp/computed-factory ui {:keyfn (fn [item] (-> ui (comp/get-ident item) second str))})]
     (when visible?
-      (div :.ui.basic.segment {:key (str k)}
+      (div {:className (or top-class "ui basic segment")
+            :key       (str k)}
         (dom/h2 :.ui.header title)
         (when (or (nil? add-position) (= :top add-position)) add)
         (if (seq items)
