@@ -18,7 +18,8 @@
     [com.fulcrologic.rad.options-util :refer [?!]]
     [com.fulcrologic.rad.rendering.semantic-ui.form :as sui-form]
     [com.fulcrologic.rad.report :as report]
-    [com.fulcrologic.rad.semantic-ui-options :as suo]))
+    [com.fulcrologic.rad.semantic-ui-options :as suo]
+    [com.fulcrologic.rad.report-options :as ro]))
 
 (defn row-action-buttons [report-instance row-props]
   (let [{::report/keys [row-actions]} (comp/component-options report-instance)
@@ -51,6 +52,14 @@
                     label)))))
           row-actions)))))
 
+(defn column-alignment-class [report-instance attr]
+  (let [alignment (?! (get attr ro/column-alignment) report-instance attr)]
+    (case alignment
+      :left "left aligned"
+      :right "right aligned"
+      :center "center aligned"
+      "")))
+
 (comp/defsc TableRowLayout [_ {:keys [report-instance props] :as rp}]
   {}
   (let [{::report/keys [columns link links on-select-row]} (comp/component-options report-instance)
@@ -67,7 +76,8 @@
                           (report/select-row! report-instance idx)))}
       (map-indexed
         (fn [idx {::attr/keys [qualified-key] :as column}]
-          (let [column-classes (report/column-classes report-instance column)]
+          (let [alignment-class (column-alignment-class report-instance column)
+                column-classes  (str alignment-class " " (report/column-classes report-instance column))]
             (dom/td {:key     (str "col-" qualified-key)
                      :classes [(?! sui-cell-class report-instance idx) column-classes]}
               (let [{:keys [edit-form entity-id]} (report/form-link report-instance props qualified-key)
@@ -240,23 +250,24 @@
       (dom/thead
         (dom/tr
           (map-indexed (fn [idx {:keys [label help column]}]
-                         (dom/th {:key     idx
-                                  :classes [(?! sui-header-class report-instance idx)]}
-                           (if (sortable? column)
-                             (dom/a {:onClick (fn [evt]
-                                                (evt/stop-propagation! evt)
-                                                (report/sort-rows! report-instance column))}
-                               (str label)
-                               (when (= sorting-by (::attr/qualified-key column))
-                                 (if ascending?
-                                   (dom/i :.angle.down.icon)
-                                   (dom/i :.angle.up.icon))))
-                             (str label))
-                           #?(:cljs
-                              (when help
-                                (ui-popup {:trigger (dom/i :.ui.circle.info.icon)}
-                                  (ui-popup-content {}
-                                    help))))))
+                         (let [alignment-class (column-alignment-class report-instance column)]
+                           (dom/th {:key     idx
+                                    :classes [alignment-class (?! sui-header-class report-instance idx)]}
+                             (if (sortable? column)
+                               (dom/a {:onClick (fn [evt]
+                                                  (evt/stop-propagation! evt)
+                                                  (report/sort-rows! report-instance column))}
+                                 (str label)
+                                 (when (= sorting-by (::attr/qualified-key column))
+                                   (if ascending?
+                                     (dom/i :.angle.down.icon)
+                                     (dom/i :.angle.up.icon))))
+                               (str label))
+                             #?(:cljs
+                                (when help
+                                  (ui-popup {:trigger (dom/i :.ui.circle.info.icon)}
+                                    (ui-popup-content {}
+                                      help)))))))
             column-headings)
           (when has-row-actions? (dom/th {:classes [(or
                                                       (?! sui-header-class report-instance (count column-headings))
