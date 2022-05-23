@@ -161,7 +161,7 @@
           (let [page-count (report/page-count report-instance)]
             (when (> page-count 1)
               (div :.ui.two.column.centered.grid
-                (div :.column
+                (div :.two.wide.column
                   (div {:style {:paddingTop "4px"}}
                     #?(:cljs
                        (sui-pagination/ui-pagination {:activePage   (report/current-page report-instance)
