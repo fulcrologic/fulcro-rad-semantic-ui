@@ -257,12 +257,12 @@
                                (dom/a {:onClick (fn [evt]
                                                   (evt/stop-propagation! evt)
                                                   (report/sort-rows! report-instance column))}
-                                 (str label)
+                                 label
                                  (when (= sorting-by (::attr/qualified-key column))
                                    (if ascending?
                                      (dom/i :.angle.down.icon)
                                      (dom/i :.angle.up.icon))))
-                               (str label))
+                               label)
                              #?(:cljs
                                 (when help
                                   (ui-popup {:trigger (dom/i :.ui.circle.info.icon)}
