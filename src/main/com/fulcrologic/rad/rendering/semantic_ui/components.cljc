@@ -42,11 +42,10 @@
 (defsc WrappedDropdown [this {:keys [onChange value multiple] :as props}]
   {:initLocalState (fn [this]
                      #?(:cljs
-                        (let [xform-options (memoize
-                                              (fn [options]
-                                                (clj->js (mapv (fn [option]
-                                                                 (update option :value ftransit/transit-clj->str))
-                                                           options))))
+                        (let [xform-options (fn [options]
+                                              (clj->js (mapv (fn [option]
+                                                               (update option :value ftransit/transit-clj->str))
+                                                         options)))
                               xform-value   (fn [multiple? value]
                                               (user-format->sui-format {:multiple multiple?} value))]
                           {:get-options  (fn [props] (xform-options (:options props)))
