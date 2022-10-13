@@ -20,7 +20,8 @@
             value     (control/current-value instance control-key)]
         (when visible?
           (dom/div :.field
-            (dom/div :.ui.toggle.checkbox {:key (str control-key)}
+            (dom/label label)
+            (dom/div :.ui.fitted.toggle.checkbox {:key (str control-key)}
               (dom/input {:type     "checkbox"
                           :readOnly (boolean disabled?)
                           :onChange (fn [_]
@@ -28,7 +29,7 @@
                                       (when onChange
                                         (onChange instance (not value))))
                           :checked  (boolean value)})
-              (dom/label label)))))
+                (dom/label "")))))
       (log/error "Could not find control definition for " control-key))))
 
 (def render-control (comp/factory BooleanControl {:keyfn :control-key}))
