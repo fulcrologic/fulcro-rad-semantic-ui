@@ -18,8 +18,7 @@
   {:shouldComponentUpdate (fn [_ _ _] true)}
   (let [controls (control/component-controls instance)
         props    (comp/props instance)
-        {:keys [label onChange icon placeholder disabled? visible?] 
-         attr suo/report-string-control-attributes :as control} (get controls control-key)]
+        {:keys [label onChange icon placeholder disabled? visible? user-props] :as control} (get controls control-key)]
     (when control
       (let [label       (?! label instance)
             disabled?   (?! disabled? instance)
@@ -38,7 +37,7 @@
                                                         ;; Change the URL parameter
                                                         (onChange instance v))))]
         (when visible?
-          (let [inp (dom/input (merge attr
+          (let [inp (dom/input (merge user-props
                                       {:readOnly    (boolean disabled?)
                                        :placeholder (str placeholder)
                                        :onChange    chg!
