@@ -341,10 +341,13 @@
                              (?! (suo/get-rendering-options form-instance suo/controls-class) env)
                              (?! (comp/component-options form-instance ::controls-class) env)
                              "ui top attached segment")}
-            (dom/h3 :.ui.header
-              title
-              (div :.ui.right.floated.buttons
-                (keep #(control/render-control master-form %) action-buttons))))
+               (div {:style {:display "flex"
+                             :justify-content "space-between"
+                             :flex-wrap "wrap"}}
+                 (dom/h3 :.ui.header {:style {:word-wrap "break-word" :max-width "100%"}}
+                   title)
+                 (div :.ui.buttons {:style {:text-align "right" :display "inline" :flex-grow "1"}}
+                   (keep #(control/render-control master-form %) action-buttons))))
           (div {:classes [(or (?! (comp/component-options form-instance ::form-class) env) "ui attached form")
                           (when invalid? "error")]}
             (div :.ui.error.message (tr "The form has errors and cannot be saved."))
