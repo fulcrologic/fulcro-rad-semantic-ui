@@ -342,11 +342,11 @@
                              (?! (comp/component-options form-instance ::controls-class) env)
                              "ui top attached segment")}
                (div {:style {:display "flex"
-                             :justify-content "space-between"
-                             :flex-wrap "wrap"}}
-                 (dom/h3 :.ui.header {:style {:word-wrap "break-word" :max-width "100%"}}
+                             :justifyContent "space-between"
+                             :flexWrap "wrap"}}
+                 (dom/h3 :.ui.header {:style {:wordWrap "break-word" :maxWidth "100%"}}
                    title)
-                 (div :.ui.buttons {:style {:text-align "right" :display "inline" :flex-grow "1"}}
+                 (div :.ui.buttons {:style {:textAlign "right" :display "inline" :flexGrow "1"}}
                    (keep #(control/render-control master-form %) action-buttons))))
           (div {:classes [(or (?! (comp/component-options form-instance ::form-class) env) "ui attached form")
                           (when invalid? "error")]}
