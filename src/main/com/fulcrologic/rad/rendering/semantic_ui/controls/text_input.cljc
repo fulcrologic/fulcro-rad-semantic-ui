@@ -5,7 +5,6 @@
     [com.fulcrologic.fulcro.dom.events :as evt]
     [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.rad.options-util :refer [?! debounce]]
-    [com.fulcrologic.rad.semantic-ui-options :as suo]
     [taoensso.timbre :as log]   
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom]
        :clj  [com.fulcrologic.fulcro.dom-server :as dom])))
