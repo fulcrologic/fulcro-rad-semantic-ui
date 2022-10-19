@@ -5,7 +5,7 @@
     [com.fulcrologic.fulcro.dom.events :as evt]
     [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.rad.options-util :refer [?! debounce]]
-    [taoensso.timbre :as log]   
+    [taoensso.timbre :as log]
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom]
        :clj  [com.fulcrologic.fulcro.dom-server :as dom])))
 
@@ -48,7 +48,7 @@
             (if icon
               (dom/div :.ui.icon.input
                 (dom/i {:className (str icon " icon")})
-                inp )
+                inp)
               inp))))))))
 
 (def render-control (comp/factory TextControl {:keyfn :control-key}))
