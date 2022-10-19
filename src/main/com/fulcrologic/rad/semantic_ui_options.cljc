@@ -60,17 +60,6 @@
   the default (button) will be rendered."
   ::report-row-button-renderer)
 
-(def report-string-control-attributes
-  "Provide dom/input attributes for report string  control
-   Example:
-     ::max       {:type          :string
-                  :local?        true
-                  :label         \"Max\"
-                  :default-value \"10\"
-                  suo/report-string-control-attributes
-                  {:type \"number\" :min \"4\" :step \"2\" :max \"20\"} }"
-  ::report-string-control-attributes)
-
 (def action-button-render
   "A `(fn [instance {:keys [key control disabled? loading?]}] dom-element)`.
 
