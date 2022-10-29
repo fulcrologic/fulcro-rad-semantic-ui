@@ -10,7 +10,6 @@
     [clojure.string :as str]
     [com.fulcrologic.fulcro.components :as comp]
     [com.fulcrologic.fulcro.dom.events :as evt]
-    [com.fulcrologic.fulcro.dom.html-entities :as ent]
     [com.fulcrologic.fulcro-i18n.i18n :refer [tr trc]]
     [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.rad.control :as control]
@@ -19,7 +18,8 @@
     [com.fulcrologic.rad.rendering.semantic-ui.form :as sui-form]
     [com.fulcrologic.rad.report :as report]
     [com.fulcrologic.rad.semantic-ui-options :as suo]
-    [com.fulcrologic.rad.report-options :as ro]))
+    [com.fulcrologic.rad.report-options :as ro]
+    [taoensso.timbre :as log]))
 
 (defn row-action-buttons [report-instance row-props]
   (let [{::report/keys [row-actions]} (comp/component-options report-instance)
@@ -159,13 +159,14 @@
         (div :.ui.form
           (map-indexed
             (fn [idx row]
-              (div {:key       idx
-                    :className (or
-                                 (?! (suo/get-rendering-options report-instance suo/report-controls-row-class) report-instance idx)
-                                 (sui-form/n-fields-string (count row)))}
-                (keep #(let [control (get controls %)]
-                         (when (or (not controlled?) (:local? control))
-                           (control/render-control report-instance % control))) row)))
+              (let [nfields (count (filter #(or (not controlled?) (:local? (get controls %))) row))]
+                (div {:key       idx
+                      :className (or
+                                   (?! (suo/get-rendering-options report-instance suo/report-controls-row-class) report-instance idx)
+                                   (sui-form/n-fields-string nfields))}
+                  (keep #(let [control (get controls %)]
+                           (when (or (not controlled?) (:local? control))
+                             (control/render-control report-instance % control))) row))))
             input-layout))
         (when paginate?
           (let [page-count (report/page-count report-instance)]
