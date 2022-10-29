@@ -10,6 +10,6 @@
   (comp/factory (inputs/StringBufferedInput ::DecimalInput
                   {:model->string (fn [n] (math/numeric->str n))
                    :string->model (fn [s] (math/numeric s))
-                   :string-filter (fn [s] (str/replace s #"[^\d.]" ""))})))
+                   :string-filter (fn [s] (first (re-find #"^-?\d*(\.\d*)?" s)))})))
 
 (def render-field (render-field-factory {} ui-decimal-input))

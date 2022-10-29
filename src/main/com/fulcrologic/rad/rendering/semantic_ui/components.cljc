@@ -4,7 +4,7 @@
         [[com.fulcrologic.fulcro.dom :as dom :refer [div label input]]
          [com.fulcrologic.semantic-ui.modules.dropdown.ui-dropdown :refer [ui-dropdown]]]
         :clj
-        [[com.fulcrologic.fulcro.dom-server :as dom :refer [div label input]]])
+        [[com.fulcrologic.fulcro.dom-server :as dom]])
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     [com.fulcrologic.fulcro.algorithms.transit :as ftransit]
     [taoensso.timbre :as log]))
@@ -42,10 +42,11 @@
 (defsc WrappedDropdown [this {:keys [onChange value multiple] :as props}]
   {:initLocalState (fn [this]
                      #?(:cljs
-                        (let [xform-options (memoize (fn [options]
-                                                       (clj->js (mapv (fn [{:keys [text value]}]
-                                                                        #js {:text text :value (some-> value (ftransit/transit-clj->str))})
-                                                                  options))))
+                        (let [xform-options (memoize
+                                              (fn [options]
+                                                (clj->js (mapv (fn [option]
+                                                                 (update option :value ftransit/transit-clj->str))
+                                                           options))))
                               xform-value   (fn [multiple? value]
                                               (user-format->sui-format {:multiple multiple?} value))]
                           {:get-options  (fn [props] (xform-options (:options props)))
