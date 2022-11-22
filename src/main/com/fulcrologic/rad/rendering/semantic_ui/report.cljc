@@ -370,7 +370,8 @@
       (when render-controls
         (render-controls report-instance))
       (div {:className body-class}
-        (div :.ui.orange.loader {:classes [(when (or busy? loading?) "active")]})
+        (when (or busy? loading?)
+          (div :.ui.active.loader {}))
         (if rotate?
           (render-rotated-table this env)
           (render-standard-table this env))))))
