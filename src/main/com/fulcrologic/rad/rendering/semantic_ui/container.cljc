@@ -82,4 +82,5 @@
             (map
               (fn [[id cls]]
                 (dom/div {:key id}
-                  (render-cls id cls))) (container/id-child-pairs children))))))))
+                  (render-cls id cls)))
+              (container/id-child-pairs container-instance))))))))
