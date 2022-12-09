@@ -13,17 +13,17 @@
   "Converts transit encoded value(s), used by Semantic UI, into CLJS datastructure."
   [{:keys [multiple]} value]
   (if multiple
-    (into [] (map ftransit/transit-str->clj value))
-    (ftransit/transit-str->clj value)))
+    (into [] (map (fn [v] (ftransit/transit-str->clj v {:metadata? false})) value))
+    (ftransit/transit-str->clj value {:metadata? false})))
 
 (defn user-format->sui-format [{:keys [multiple]} value]
   "Converts CLJS datastructure into transit encoded string(s), usable by Semantic UI."
   (if multiple
     (if value
-      (to-array (map ftransit/transit-clj->str value))
+      (to-array (map (fn [v] (ftransit/transit-clj->str v {:metadata? false})) value))
       #js [])
     (if (or value (boolean? value))
-      (ftransit/transit-clj->str value)
+      (ftransit/transit-clj->str value {:metadata? false})
       "")))
 
 (defn wrapped-onChange
@@ -45,7 +45,7 @@
                         (let [xform-options (memoize
                                               (fn [options]
                                                 (clj->js (mapv (fn [option]
-                                                                 (update option :value ftransit/transit-clj->str))
+                                                                 (update option :value (fn [v] (ftransit/transit-clj->str v {:metadata? false}))))
                                                            options))))
                               xform-value   (fn [multiple? value]
                                               (user-format->sui-format {:multiple multiple?} value))]
@@ -75,8 +75,8 @@
                                           (try
                                             (let [string-value (.-value v)
                                                   value        (if multiple
-                                                                 (mapv #(when (seq %) (ftransit/transit-str->clj %)) string-value)
-                                                                 (when (seq string-value) (ftransit/transit-str->clj string-value)))]
+                                                                 (mapv #(when (seq %) (ftransit/transit-str->clj % {:metadata? false})) string-value)
+                                                                 (when (seq string-value) (ftransit/transit-str->clj string-value {:metadata? false})))]
                                               (when userOnChange
                                                 (userOnChange value)))
                                             (catch :default e
