@@ -1,9 +1,10 @@
 (ns com.fulcrologic.rad.rendering.semantic-ui.form
   (:require
-    [com.fulcrologic.fulcro-i18n.i18n :refer [tr trc]]
+    [com.fulcrologic.fulcro-i18n.i18n :refer [tr trf trc]]
     [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.rad.options-util :refer [?! narrow-keyword]]
     [com.fulcrologic.rad.form :as form]
+    [com.fulcrologic.rad.form-options :as fo]
     [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.rad.blob :as blob]
     [com.fulcrologic.rad.debugging :as debug]
@@ -52,10 +53,25 @@
                                                                               qualified-key ""})]
                                                             (merge/merge-component! form-instance ui new-entity order target)
                                                             (blob/upload-file! form-instance sha-attr js-file {:file-ident [id-key new-id]})))})
-                                  (button :.ui.tiny.icon.button
-                                    {:onClick (fn [_]
-                                                (form/add-child! form-instance k ui {::form/order order}))}
-                                    (i :.plus.icon)))))
+                                  (let [possible-types (if (comp/union-component? ui)
+                                                         (mapv comp/query->component (vals (comp/get-query ui)))
+                                                         [ui])]
+                                    (map-indexed
+                                      (fn [idx c]
+                                        (let [add-child! (fn [_] (form/add-child! form-instance k c {::form/order order}))
+                                              add-label  (or
+                                                           (?! (comp/component-options c fo/add-label) c add-child!)
+                                                           "")]
+                                          (comp/fragment {:key (str idx)}
+                                            (if (string? add-label)
+                                              (button :.ui.tiny.icon.button
+                                                {:classes [(when (seq add-label) "labeled")]
+                                                 :key     (str idx)
+                                                 :onClick add-child!}
+                                                (i :.plus.icon)
+                                                add-label)
+                                              add-label))))
+                                      possible-types)))))
         ui-factory          (comp/computed-factory ui {:keyfn (fn [item] (-> ui (comp/get-ident item) second str))})
         top-class           (sufo/top-class form-instance attr)
         body-class          (or top-class "ui container")]
@@ -79,39 +95,59 @@
           (div :.ui.message (tr "None.")))
         (when (= :bottom add-position) add)))))
 
-(defn render-to-one [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
+(defn render-to-one [{::form/keys [master-form
+                                   form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
   (let [{::form/keys [ui can-add? can-delete? title ref-container-class]} (get subforms k)
-        form-props         (comp/props form-instance)
-        props              (get form-props k)
-        title              (?! (or title (some-> ui (comp/component-options ::form/title)) "") form-instance form-props)
-        ui-factory         (comp/computed-factory ui)
-        visible?           (form/field-visible? form-instance attr)
-        invalid?           (form/invalid-attribute-value? env attr)
-        validation-message (form/validation-error-message env attr)
-        top-class          (or (sufo/top-class form-instance attr) "")
-        std-props          {::form/nested?         true
-                            ::form/parent          form-instance
-                            ::form/parent-relation k
-                            ::form/can-delete?     (or
-                                                     (?! can-delete? form-instance form-props)
-                                                     false)}]
-    (when visible?
-      (cond
-        props
-        (div {:key       (str k)
-              :className top-class
-              :classes   [(?! ref-container-class env)]}
-          (h3 :.ui.header title)
-          (when invalid?
-            (div :.ui.error.message validation-message))
-          (ui-factory props (merge env std-props)))
+        form-props (comp/props form-instance)
+        props      (get form-props k)
+        top-class  (or (sufo/top-class form-instance attr) "")]
+    (cond
+      props
+      (let [ui-factory         (comp/computed-factory ui)
+            ChildForm          (if (comp/union-component? ui)
+                                 (comp/union-child-for-props ui props)
+                                 ui)
+            title              (?! (or title (some-> ChildForm (comp/component-options ::form/title)) "") form-instance form-props)
+            visible?           (form/field-visible? form-instance attr)
+            invalid?           (form/invalid-attribute-value? env attr)
+            validation-message (form/validation-error-message env attr)
+            std-props          {::form/nested?         true
+                                ::form/parent          form-instance
+                                ::form/parent-relation k
+                                ::form/can-delete?     (or
+                                                         (?! can-delete? form-instance form-props)
+                                                         false)}]
+        (when visible?
+          (div {:key       (str k)
+                :className top-class
+                :classes   [(?! ref-container-class env)]}
+            (h3 :.ui.header title)
+            (when invalid?
+              (div :.ui.error.message validation-message))
+            (ui-factory props (merge env std-props)))))
 
-        (or (nil? can-add?) (?! can-add? form-instance attr))
+      (or (nil? can-add?) (?! can-add? form-instance attr))
+      (let [possible-forms (if (comp/union-component? ui)
+                             (mapv comp/query->component (vals (comp/get-query ui)))
+                             [ui])]
         (div {:key       (str k)
               :className top-class
               :classes   [(?! ref-container-class env)]}
           (h3 :.ui.header title)
-          (button :.ui.primary.button {:onClick (fn [] (form/add-child! form-instance k ui))} (tr "Create")))))))
+          (map-indexed
+            (fn [idx ui]
+              (let [add-child! (fn [] (form/add-child! form-instance k ui))
+                    add-label  (or
+                                 (?! (comp/component-options ui fo/add-label) ui add-child!)
+                                 "")]
+                (comp/fragment {:key (str idx)}
+                  (if (string? add-label)
+                    (button :.ui.icon.button {:onClick add-child!
+                                              :classes [(when (seq add-label) "labeled")]}
+                      (dom/i :.plus.icon)
+                      add-label)
+                    add-label))))
+            possible-forms))))))
 
 (defn standard-ref-container [env {::attr/keys [cardinality] :as attr} options]
   (if (= :many cardinality)
@@ -162,7 +198,7 @@
         upload-id           (str k "-file-upload")
         add                 (when (or (nil? add?) add?)
                               (dom/div
-                                (dom/label :.ui.green.button {:htmlFor upload-id}
+                                (dom/label :.ui.labeled.green.icon.button {:htmlFor upload-id}
                                   (dom/i :.ui.plus.icon)
                                   (tr "Add File"))
                                 (dom/input {:type     "file"
