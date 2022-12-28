@@ -367,26 +367,31 @@
                                                             :onClick  (fn [] (form/delete-child! env))}
               (i :.times.icon)))
           (render-fields env)))
-      (let [{::form/keys [title action-buttons controls]} (comp/component-options form-instance)
+      (let [{::form/keys [title action-buttons controls show-header?]} (comp/component-options form-instance)
             title          (?! title form-instance props)
-            action-buttons (if action-buttons action-buttons form/standard-action-buttons)]
+            action-buttons (if action-buttons action-buttons form/standard-action-buttons)
+            show-header?   (cond
+                             (some? show-header?) (?! show-header? master-form)
+                             (some? (fo/show-header? computed-props)) (?! (fo/show-header? computed-props) master-form)
+                             :else true)]
         (div {:key       (str (comp/get-ident form-instance))
               :className (or
                            (?! (suo/get-rendering-options form-instance suo/layout-class) env)
                            (?! (comp/component-options form-instance suo/layout-class) env)
                            (?! (comp/component-options form-instance ::top-level-class) env)
                            "ui container")}
-          (div {:className (or
-                             (?! (suo/get-rendering-options form-instance suo/controls-class) env)
-                             (?! (comp/component-options form-instance ::controls-class) env)
-                             "ui top attached segment")}
-            (div {:style {:display        "flex"
-                          :justifyContent "space-between"
-                          :flexWrap       "wrap"}}
-              (dom/h3 :.ui.header {:style {:wordWrap "break-word" :maxWidth "100%"}}
-                title)
-              (div :.ui.buttons {:style {:textAlign "right" :display "inline" :flexGrow "1"}}
-                (keep #(control/render-control master-form %) action-buttons))))
+          (when show-header?
+            (div {:className (or
+                               (?! (suo/get-rendering-options form-instance suo/controls-class) env)
+                               (?! (comp/component-options form-instance ::controls-class) env)
+                               "ui top attached segment")}
+              (div {:style {:display        "flex"
+                            :justifyContent "space-between"
+                            :flexWrap       "wrap"}}
+                (dom/h3 :.ui.header {:style {:wordWrap "break-word" :maxWidth "100%"}}
+                  title)
+                (div :.ui.buttons {:style {:textAlign "right" :display "inline" :flexGrow "1"}}
+                  (keep #(control/render-control master-form %) action-buttons)))))
           (div {:classes [(or (?! (comp/component-options form-instance ::form-class) env) "ui attached form")
                           (when errors? "error")]}
             (when invalid?

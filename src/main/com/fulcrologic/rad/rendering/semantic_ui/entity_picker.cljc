@@ -1,7 +1,10 @@
 (ns com.fulcrologic.rad.rendering.semantic-ui.entity-picker
   (:require
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom :refer [div h3 button i span]]
-       :clj  [com.fulcrologic.fulcro.dom-server :as dom :refer [div h3 button i span]])
+       :clj
+       [com.fulcrologic.fulcro.dom-server :as dom :refer [div h3 button i span]])
+    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
+    [com.fulcrologic.fulcro.algorithms.normalized-state :as fns]
     [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
@@ -21,44 +24,58 @@
     [com.fulcrologic.semantic-ui.modules.modal.ui-modal-content :refer [ui-modal-content]]
     [com.fulcrologic.semantic-ui.modules.modal.ui-modal-actions :refer [ui-modal-actions]]
     [com.fulcrologic.fulcro.ui-state-machines :as uism :refer [defstatemachine]]
+    [taoensso.encore :as enc]
     [taoensso.timbre :as log]))
 
 (declare CreationModal)
 
-(defmutation entity-added [params]
-  (action [{:keys [state ref]}]
-    (log/info "ADDED")
-    nil))
-
-(defmutation start-create [{:keys [id ident form]}]
+(defmutation save-complete [{:keys [parent-registry-key parent-ident parent-relation-attribute ident]}]
   (action [{:keys [app state]}]
-    (swap! state update-in [:component/id ::CreationModal] assoc :ui/open? true :ui/form-props ident)
-    (comp/set-query! app CreationModal {:query [:ui/open?
-                                                {:ui/form-props (comp/get-query form @state)}]})
-    (form/start-form! app
-      id form
-      {:embedded? true
-       #_#_:on-saved [(entity-added {})]})))
+    (when (and parent-ident parent-relation-attribute parent-registry-key ident)
+      (enc/when-let [ParentForm      (comp/registry-key->class parent-registry-key)
+                     parent-props    (fns/ui->props @state ParentForm parent-ident)
+                     parent-relation (ao/qualified-key parent-relation-attribute)]
+        (fns/swap!-> state
+          (assoc-in (conj (comp/get-ident CreationModal {}) :ui/open?) false)
+          (assoc-in (conj parent-ident parent-relation) ident))
+        (po/load-options! app (log/spy :info ParentForm) (log/spy :info parent-props) parent-relation-attribute)
+        (comp/transact! app [(fs/mark-complete! {:entity-ident parent-ident
+                                                 :field        parent-relation})])))))
 
-(defsc CreationModal [this {:ui/keys [open? form-props] :as props} {:keys [onClose form]}]
+(defmutation start-create [{:keys [ident parent-ident parent-registry-key parent-relation-attribute Form]}]
+  (action [{:keys [app state]}]
+    (if Form
+      (let [id (second ident)]
+        (swap! state update-in [:component/id ::CreationModal] assoc :ui/open? true :ui/form-props ident)
+        (comp/set-query! app CreationModal {:query [:ui/open? {:ui/form-props (comp/get-query Form @state)}]})
+        (form/start-form! app id Form {:embedded? true
+                                       :on-saved  [(save-complete {:ident                     ident
+                                                                   :parent-registry-key       parent-registry-key
+                                                                   :parent-ident              parent-ident
+                                                                   :parent-relation-attribute parent-relation-attribute})]}))
+      (log/error "Cannot create. No form supplied."))))
+
+(defsc CreationModal [this {:ui/keys [open? form-props] :as props} {::form/keys [parent-relation parent master-form]
+                                                                    :keys       [Form onSelect]}]
   {:query         [:ui/open?
                    :ui/form-props]
    :ident         (fn [] [:component/id ::CreationModal])
    :initial-state {}}
-  (ui-modal {:open open?}
-    (ui-modal-header {} "")
-    (ui-modal-content {}
-      (when form
-        (let [factory (comp/computed-factory form)]
-          (when (and (seq form-props) (map? form-props))
-            (factory form-props)))))
-    (ui-modal-actions {}
-      (dom/div :.ui.button "Cancel")
-      (dom/div :.ui.button {:onClick (fn []
-                                       (let [ident (comp/get-ident form form-props)]
-                                         (when onClose
-                                           (onClose ident))
-                                         (m/set-value!! this :ui/open? false)))} "OK"))))
+  (let [title (?! (get-in (comp/component-options parent) [fo/field-options parent-relation fo/title])
+                parent form-props)]
+    (ui-modal {:open open?}
+      (when (seq title) (ui-modal-header {} title
+                          (dom/div :.ui.right.floated.button
+                            {:onClick (fn [] (uism/trigger! this (comp/get-ident Form form-props) :event/save {}))}
+                            "OK")
+                          (dom/div :.ui.right.floated.button
+                            {:onClick (fn [] (m/set-value!! this :ui/open? false))}
+                            "Cancel")))
+      (ui-modal-content {}
+        (when Form
+          (let [factory (comp/computed-factory Form)]
+            (when (and (map? form-props) (seq form-props))
+              (factory form-props {fo/show-header? false}))))))))
 
 (def ui-creation-modal (comp/computed-factory CreationModal))
 
@@ -70,7 +87,7 @@
     (when props
       (ui-creation-modal props pass-through-props))))
 
-(def ui-creation-container (comp/factory CreationContainer))
+(def ui-creation-container (comp/computed-factory CreationContainer))
 
 (defsc ToOnePicker [this {:keys [env attr]}]
   {:componentDidMount     (fn [this]
@@ -83,12 +100,12 @@
   (let [{::form/keys [master-form form-instance]} env
         visible? (form/field-visible? form-instance attr)]
     (when visible?
-      (let [{::form/keys [attributes field-options]} (comp/component-options form-instance)
+      (let [{::form/keys [field-options]} (comp/component-options form-instance)
             {::attr/keys [qualified-key required?]} attr
             field-options (get field-options qualified-key)
-            target-id-key (first (keep (fn [{k ::attr/qualified-key ::attr/keys [target]}]
-                                         (when (= k qualified-key) target)) attributes))
-            {::po/keys [cache-key query-key creation-form]} (merge attr field-options)
+            target-id-key (ao/target attr)
+            {Form      ::po/form
+             ::po/keys [cache-key query-key]} (merge attr field-options)
             cache-key     (or (?! cache-key (comp/react-type form-instance) (comp/props form-instance)) query-key)
             cache-key     (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
             props         (comp/props form-instance)
@@ -98,30 +115,34 @@
             read-only?    (or (form/read-only? master-form attr) (form/read-only? form-instance attr))
             invalid?      (and (not read-only?) (form/invalid-attribute-value? env attr))
             extra-props   (cond-> (?! (form/field-style-config env attr :input/props) env)
-                            creation-form (merge {:allowAdditions   true
-                                                  :additionPosition "top"
-                                                  :onAddItem        #?(:clj  (fn [])
-                                                                       :cljs (fn [_ ^js data]
-                                                                               (let [id (tempid/tempid)]
-                                                                                 (comp/transact! this [(start-create {:id            id
-                                                                                                                      :initial-value (.-value data)
-                                                                                                                      :form          creation-form
-                                                                                                                      :ident         [target-id-key id]})]))))}))
+                            Form (merge {:allowAdditions   true
+                                         :additionPosition "top"
+                                         :onAddItem        #?(:clj  (fn [])
+                                                              :cljs (fn [_ _]
+                                                                      (let [id (tempid/tempid)]
+                                                                        (comp/transact! this
+                                                                          [(start-create {:parent-ident              (comp/get-ident form-instance)
+                                                                                          :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
+                                                                                          :parent-relation-attribute attr
+                                                                                          :Form                      Form
+                                                                                          :ident                     [target-id-key id]})]))))}))
             top-class     (sufo/top-class form-instance attr)
             onSelect      (fn [v] (form/input-changed! env qualified-key v))]
         (div {:className (or top-class "ui field")
               :classes   [(when invalid? "error")]}
-          (when creation-form
-            (ui-creation-container {:form    creation-form
-                                    :onClose (fn [v]
-                                               (log/info "Close " v)
-                                               (when v
-                                                 (let [{:keys [env attr]} (comp/props this)
-                                                       form-instance (::form/form-instance env)
-                                                       props         (comp/props form-instance)
-                                                       form-class    (comp/react-type form-instance)]
-                                                   (po/load-options! form-instance form-class props attr))
-                                                 (onSelect v)))}))
+          (when Form
+            (ui-creation-container (merge env
+                                     {::form/parent          form-instance
+                                      ::form/parent-relation qualified-key
+                                      :Form                  Form
+                                      :onSelect              (fn [v]
+                                                               (when v
+                                                                 (let [{:keys [env attr]} (comp/props this)
+                                                                       form-instance (::form/form-instance env)
+                                                                       props         (comp/props form-instance)
+                                                                       form-class    (comp/react-type form-instance)]
+                                                                   (po/load-options! form-instance form-class props attr))
+                                                                 (onSelect v)))})))
           (dom/label field-label (when invalid? (str " (" (tr "Required") ")")))
           (if read-only?
             (let [value (first (filter #(= value (:value %)) options))]
