@@ -38,11 +38,12 @@
         (fns/swap!-> state
           (assoc-in (conj (comp/get-ident CreationModal {}) :ui/open?) false)
           (assoc-in (conj parent-ident parent-relation) ident))
-        (po/load-options! app (log/spy :info ParentForm) (log/spy :info parent-props) parent-relation-attribute)
+        (po/load-options! app ParentForm parent-props parent-relation-attribute
+          {:force-reload? true})
         (comp/transact! app [(fs/mark-complete! {:entity-ident parent-ident
                                                  :field        parent-relation})])))))
 
-(defmutation start-create [{:keys [ident parent-ident parent-registry-key parent-relation-attribute Form]}]
+(defmutation start-modal-form [{:keys [ident parent-ident parent-registry-key parent-relation-attribute Form]}]
   (action [{:keys [app state]}]
     (if Form
       (let [id (second ident)]
@@ -53,7 +54,7 @@
                                                                    :parent-registry-key       parent-registry-key
                                                                    :parent-ident              parent-ident
                                                                    :parent-relation-attribute parent-relation-attribute})]}))
-      (log/error "Cannot create. No form supplied."))))
+      (log/error "Cannot create/edit. No form supplied."))))
 
 (defsc CreationModal [this {:ui/keys [open? form-props] :as props} {::form/keys [parent-relation parent master-form]
                                                                     :keys       [Form onSelect]}]
@@ -105,54 +106,59 @@
             field-options (get field-options qualified-key)
             target-id-key (ao/target attr)
             {Form      ::po/form
-             ::po/keys [cache-key query-key]} (merge attr field-options)
-            cache-key     (or (?! cache-key (comp/react-type form-instance) (comp/props form-instance)) query-key)
-            cache-key     (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
+             ::po/keys [allow-edit? allow-create? cache-key query-key]} (merge attr field-options)
             props         (comp/props form-instance)
+            cache-key     (or (?! cache-key (comp/react-type form-instance) props) query-key)
+            cache-key     (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
             options       (get-in props [::po/options-cache cache-key :options])
             value         [target-id-key (get-in props [qualified-key target-id-key])]
             field-label   (form/field-label env attr)
             read-only?    (or (form/read-only? master-form attr) (form/read-only? form-instance attr))
             invalid?      (and (not read-only?) (form/invalid-attribute-value? env attr))
-            extra-props   (cond-> (?! (form/field-style-config env attr :input/props) env)
-                            Form (merge {:allowAdditions   true
-                                         :additionPosition "top"
-                                         :onAddItem        #?(:clj  (fn [])
-                                                              :cljs (fn [_ _]
-                                                                      (let [id (tempid/tempid)]
-                                                                        (comp/transact! this
-                                                                          [(start-create {:parent-ident              (comp/get-ident form-instance)
-                                                                                          :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
-                                                                                          :parent-relation-attribute attr
-                                                                                          :Form                      Form
-                                                                                          :ident                     [target-id-key id]})]))))}))
+            extra-props   (?! (form/field-style-config env attr :input/props) env)
             top-class     (sufo/top-class form-instance attr)
+            can-edit?     (?! allow-edit? form-instance qualified-key)
+            can-create?   (?! allow-create? form-instance qualified-key)
+            mutable?      (and Form (or can-edit? can-create?))
             onSelect      (fn [v] (form/input-changed! env qualified-key v))]
         (div {:className (or top-class "ui field")
               :classes   [(when invalid? "error")]}
-          (when Form
-            (ui-creation-container (merge env
-                                     {::form/parent          form-instance
-                                      ::form/parent-relation qualified-key
-                                      :Form                  Form
-                                      :onSelect              (fn [v]
-                                                               (when v
-                                                                 (let [{:keys [env attr]} (comp/props this)
-                                                                       form-instance (::form/form-instance env)
-                                                                       props         (comp/props form-instance)
-                                                                       form-class    (comp/react-type form-instance)]
-                                                                   (po/load-options! form-instance form-class props attr))
-                                                                 (onSelect v)))})))
           (dom/label field-label (when invalid? (str " (" (tr "Required") ")")))
           (if read-only?
             (let [value (first (filter #(= value (:value %)) options))]
               (:text value))
-            (ui-wrapped-dropdown (merge extra-props
-                                   {:onChange  (fn [v] (onSelect v))
-                                    :value     value
-                                    :clearable (not required?)
-                                    :disabled  read-only?
-                                    :options   options}))))))))
+            (comp/fragment {}                               ; FIXME: CSS help pls
+              (ui-wrapped-dropdown (merge extra-props
+                                     {:onChange  (fn [v] (onSelect v))
+                                      :compact   true
+                                      :value     value
+                                      :clearable (not required?)
+                                      :disabled  read-only?
+                                      :options   options}))
+              (when mutable?
+                (let [open-editor! (fn [id]
+                                     #?(:cljs (comp/transact! this
+                                                [(start-modal-form {:parent-ident              (comp/get-ident form-instance)
+                                                                    :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
+                                                                    :parent-relation-attribute attr
+                                                                    :Form                      Form
+                                                                    :ident                     [target-id-key id]})])))]
+                  (comp/fragment {}
+                    (ui-creation-container (merge env
+                                             {::form/parent          form-instance
+                                              ::form/parent-relation qualified-key
+                                              :Form                  Form}))
+                    (when can-create?
+                      (dom/button :.ui.basic.icon.button
+                        {:onClick (fn [] (open-editor! (tempid/tempid)))}
+                        (dom/i :.plus.icon)))
+                    (when can-edit?
+                      (dom/button :.ui.basic.icon.button
+                        {:disabled (not (second value))
+                         :onClick  (fn []
+                                     (when-let [id (some-> value second)]
+                                       (open-editor! id)))}
+                        (dom/i :.pencil.icon)))))))))))))
 
 (let [ui-to-one-picker (comp/factory ToOnePicker {:keyfn (fn [{:keys [attr]}] (::attr/qualified-key attr))})]
   (defn to-one-picker [env attribute]
