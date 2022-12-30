@@ -7,6 +7,7 @@
     [com.fulcrologic.fulcro.algorithms.normalized-state :as fns]
     [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
+    [com.fulcrologic.fulcro.raw.components :as rc]
     [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
     [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
     [com.fulcrologic.fulcro.react.hooks :as hooks]
@@ -29,19 +30,42 @@
 
 (declare CreationModal)
 
-(defmutation save-complete [{:keys [parent-registry-key parent-ident parent-relation-attribute ident]}]
-  (action [{:keys [app state]}]
-    (when (and parent-ident parent-relation-attribute parent-registry-key ident)
-      (enc/when-let [ParentForm      (comp/registry-key->class parent-registry-key)
-                     parent-props    (fns/ui->props @state ParentForm parent-ident)
-                     parent-relation (ao/qualified-key parent-relation-attribute)]
-        (fns/swap!-> state
-          (assoc-in (conj (comp/get-ident CreationModal {}) :ui/open?) false)
-          (assoc-in (conj parent-ident parent-relation) ident))
-        (po/load-options! app ParentForm parent-props parent-relation-attribute
-          {:force-reload? true})
-        (comp/transact! app [(fs/mark-complete! {:entity-ident parent-ident
-                                                 :field        parent-relation})])))))
+(defn- integrate-with-parent-form! [{:keys [state app]} {:keys [parent-registry-key parent-ident parent-relation-attribute ident]}]
+  (when (and parent-ident parent-relation-attribute parent-registry-key ident)
+    (enc/when-let [ParentForm      (comp/registry-key->class parent-registry-key)
+                   parent-props    (fns/ui->props @state ParentForm parent-ident)
+                   parent-relation (ao/qualified-key parent-relation-attribute)]
+      (fns/swap!-> state
+        (assoc-in (conj (comp/get-ident CreationModal {}) :ui/open?) false)
+        (assoc-in (conj parent-ident parent-relation) ident))
+      (po/load-options! app ParentForm parent-props parent-relation-attribute
+        {:force-reload? true})
+      (comp/transact! app [(fs/mark-complete! {:entity-ident parent-ident
+                                               :field        parent-relation})]))))
+
+(defmutation save-complete [{:keys [parent-registry-key parent-ident parent-relation-attribute ident] :as params}]
+  (action [env]
+    (integrate-with-parent-form! env params)))
+
+(defmutation quick-add [{:keys [ident entity parent-registry-key parent-ident parent-relation-attribute] :as params}]
+  (ok-action [{:keys [tempid->realid] :as env}]
+    (let [[ident entity] (tempid/resolve-tempids [ident entity] tempid->realid)
+          params (assoc params :ident ident :entity entity)]
+      (if (-> ident second tempid/tempid?)
+        (log/error "Quick add failed. Server may not have saved the data")
+        (integrate-with-parent-form! env params))))
+  (remote [env]
+    (let [delta {ident (reduce-kv
+                         (fn [m k v]
+                           (assoc m k {:after v}))
+                         {}
+                         entity)}]
+      (-> env
+        (m/returning (rc/nc (vec (keys entity))))
+        (m/with-server-side-mutation `form/save-as-form)
+        (m/with-params {::form/master-pk (first ident)
+                        ::form/id        (second ident)
+                        ::form/delta     delta})))))
 
 (defmutation start-modal-form [{:keys [ident parent-ident parent-registry-key parent-relation-attribute Form]}]
   (action [{:keys [app state]}]
@@ -106,7 +130,7 @@
             field-options (get field-options qualified-key)
             target-id-key (ao/target attr)
             {Form      ::po/form
-             ::po/keys [allow-edit? allow-create? cache-key query-key]} (merge attr field-options)
+             ::po/keys [quick-create allow-edit? allow-create? cache-key query-key]} (merge attr field-options)
             props         (comp/props form-instance)
             cache-key     (or (?! cache-key (comp/react-type form-instance) props) query-key)
             cache-key     (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
@@ -115,7 +139,25 @@
             field-label   (form/field-label env attr)
             read-only?    (or (form/read-only? master-form attr) (form/read-only? form-instance attr))
             invalid?      (and (not read-only?) (form/invalid-attribute-value? env attr))
-            extra-props   (?! (form/field-style-config env attr :input/props) env)
+            extra-props   (cond-> (?! (form/field-style-config env attr :input/props) env)
+                            quick-create (merge {:allowAdditions   true
+                                                 :additionPosition "top"
+                                                 :onAddItem        (fn [_ data]
+                                                                     #?(:cljs
+                                                                        (try
+                                                                          (let [v      (.-value ^js data)
+                                                                                entity (quick-create v)
+                                                                                id     (get entity target-id-key)
+                                                                                ident  [target-id-key id]]
+                                                                            (when (tempid/tempid? id)
+                                                                              (comp/transact! form-instance
+                                                                                [(quick-add {:parent-ident              (comp/get-ident form-instance)
+                                                                                             :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
+                                                                                             :parent-relation-attribute attr
+                                                                                             :ident                     ident
+                                                                                             :entity                    entity})])))
+                                                                          (catch :default e
+                                                                            (log/error e "Quick create failed.")))))}))
             top-class     (sufo/top-class form-instance attr)
             can-edit?     (?! allow-edit? form-instance qualified-key)
             can-create?   (?! allow-create? form-instance qualified-key)
