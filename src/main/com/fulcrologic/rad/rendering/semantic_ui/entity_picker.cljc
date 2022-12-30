@@ -163,7 +163,7 @@
                                                                             (log/error e "Quick create failed.")))))}))
             top-class     (sufo/top-class form-instance attr)
             can-edit?     (?! allow-edit? form-instance qualified-key)
-            can-create?   (?! allow-create? form-instance qualified-key)
+            can-create?   (if-some [v (?! allow-create? form-instance qualified-key)] v (boolean Form))
             mutable?      (and Form (or can-edit? can-create?))
             onSelect      (fn [v] (form/input-changed! env qualified-key v))]
         (div {:className (or top-class "ui field")
