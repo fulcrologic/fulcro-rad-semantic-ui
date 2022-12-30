@@ -35,13 +35,16 @@
     (enc/when-let [ParentForm      (comp/registry-key->class parent-registry-key)
                    parent-props    (fns/ui->props @state ParentForm parent-ident)
                    parent-relation (ao/qualified-key parent-relation-attribute)]
-      (fns/swap!-> state
-        (assoc-in (conj (comp/get-ident CreationModal {}) :ui/open?) false)
-        (assoc-in (conj parent-ident parent-relation) ident))
-      (po/load-options! app ParentForm parent-props parent-relation-attribute
-        {:force-reload? true})
-      (comp/transact! app [(fs/mark-complete! {:entity-ident parent-ident
-                                               :field        parent-relation})]))))
+      (if-not (tempid/tempid? (second ident))
+        (do (fns/swap!-> state
+                         (assoc-in (conj (comp/get-ident CreationModal {}) :ui/open?) false)
+                         (assoc-in (conj parent-ident parent-relation) ident))
+            (po/load-options! app ParentForm parent-props parent-relation-attribute
+                              {:force-reload? true})
+            (comp/transact! app [(fs/mark-complete! {:entity-ident parent-ident
+                                                     :field parent-relation})]))
+        (log/warn "Saving the new value for" parent-relation "returned OK from the server yet"
+                  "the tempid in" ident "has not been remapped to a real one, indicating that the save failed")))))
 
 (defmutation save-complete [{:keys [parent-registry-key parent-ident parent-relation-attribute ident] :as params}]
   (action [env]
@@ -80,14 +83,14 @@
                                                                    :parent-relation-attribute parent-relation-attribute})]}))
       (log/error "Cannot create/edit. No form supplied."))))
 
-(defsc CreationModal [this {:ui/keys [open? form-props] :as props} {::form/keys [parent-relation parent master-form]
-                                                                    :keys       [Form onSelect]}]
+(defsc CreationModal [this {:ui/keys [open? form-props] :as props} {::form/keys [parent-relation parent]
+                                                                    :keys       [Form]}]
   {:query         [:ui/open?
                    :ui/form-props]
    :ident         (fn [] [:component/id ::CreationModal])
    :initial-state {}}
   (let [title (?! (get-in (comp/component-options parent) [fo/field-options parent-relation fo/title])
-                parent form-props)]
+                parent form-props)] ; sending in parent instead of "this form" b/c it doesn't exist yet
     (ui-modal {:open open?}
       (when (seq title) (ui-modal-header {} title
                           (dom/div :.ui.right.floated.button
