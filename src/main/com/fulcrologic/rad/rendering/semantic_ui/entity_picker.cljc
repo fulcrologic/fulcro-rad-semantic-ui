@@ -172,12 +172,14 @@
         (div {:className (or top-class "ui field")
               :classes   [(when invalid? "error")]}
           (dom/label field-label (when invalid? (str " (" (tr "Required") ")")))
-          (if read-only?
+         (if read-only?
             (let [value (first (filter #(= value (:value %)) options))]
               (:text value))
-            (comp/fragment {}                               ; FIXME: CSS help pls
+            (dom/div :.ui.small.menu {:style {:marginTop 0}}
               (ui-wrapped-dropdown (merge extra-props
-                                     {:onChange  (fn [v] (onSelect v))
+                                     {:style {:flexGrow 1}
+                                      :className "item"
+                                      :onChange  (fn [v] (onSelect v))
                                       :compact   true
                                       :value     value
                                       :clearable (not required?)
@@ -191,17 +193,17 @@
                                                                     :parent-relation-attribute attr
                                                                     :Form                      Form
                                                                     :ident                     [target-id-key id]})])))]
-                  (comp/fragment {}
+                  (dom/div :.icon.menu ; .right ?
                     (ui-creation-container (merge env
                                              {::form/parent          form-instance
                                               ::form/parent-relation qualified-key
                                               :Form                  Form}))
                     (when can-create?
-                      (dom/button :.ui.basic.icon.button
+                      (dom/button :.vertically.fitted.ui.icon.button.item
                         {:onClick (fn [] (open-editor! (tempid/tempid)))}
                         (dom/i :.plus.icon)))
                     (when can-edit?
-                      (dom/button :.ui.basic.icon.button
+                      (dom/button :.vertically.fitted.ui.icon.button.item
                         {:disabled (not (second value))
                          :onClick  (fn []
                                      (when-let [id (some-> value second)]
