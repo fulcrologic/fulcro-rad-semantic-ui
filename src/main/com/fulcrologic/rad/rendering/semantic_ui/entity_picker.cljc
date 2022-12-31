@@ -34,14 +34,20 @@
   (when (and parent-ident parent-relation-attribute parent-registry-key ident)
     (enc/when-let [ParentForm      (comp/registry-key->class parent-registry-key)
                    parent-props    (fns/ui->props @state ParentForm parent-ident)
-                   parent-relation (ao/qualified-key parent-relation-attribute)]
-      (fns/swap!-> state
-        (assoc-in (conj (comp/get-ident CreationModal {}) :ui/open?) false)
-        (assoc-in (conj parent-ident parent-relation) ident))
-      (po/load-options! app ParentForm parent-props parent-relation-attribute
-        {:force-reload? true})
-      (comp/transact! app [(fs/mark-complete! {:entity-ident parent-ident
-                                               :field        parent-relation})]))))
+                   parent-relation (ao/qualified-key parent-relation-attribute)
+                   many?           (= (ao/cardinality parent-relation-attribute) :many)]
+      (if-not (tempid/tempid? (second ident))
+        (do (fns/swap!-> state
+                         (assoc-in (conj (comp/get-ident CreationModal {}) :ui/open?) false)
+                         (update-in (conj parent-ident parent-relation)
+                                    (if many? #((fnil conj []) % ident)
+                                              (constantly ident))))
+            (po/load-options! app ParentForm parent-props parent-relation-attribute
+                              {:force-reload? true})
+            (comp/transact! app [(fs/mark-complete! {:entity-ident parent-ident
+                                                     :field parent-relation})]))
+        (log/warn "Saving the new value for" parent-relation "returned OK from the server yet"
+                  "the tempid in" ident "has not been remapped to a real one, indicating that the save failed")))))
 
 (defmutation save-complete [{:keys [parent-registry-key parent-ident parent-relation-attribute ident] :as params}]
   (action [env]
@@ -80,14 +86,14 @@
                                                                    :parent-relation-attribute parent-relation-attribute})]}))
       (log/error "Cannot create/edit. No form supplied."))))
 
-(defsc CreationModal [this {:ui/keys [open? form-props] :as props} {::form/keys [parent-relation parent master-form]
-                                                                    :keys       [Form onSelect]}]
+(defsc CreationModal [this {:ui/keys [open? form-props] :as props} {::form/keys [parent-relation parent]
+                                                                    :keys       [Form]}]
   {:query         [:ui/open?
                    :ui/form-props]
    :ident         (fn [] [:component/id ::CreationModal])
    :initial-state {}}
   (let [title (?! (get-in (comp/component-options parent) [fo/field-options parent-relation fo/title])
-                parent form-props)]
+                parent form-props)] ; sending in parent instead of "this form" b/c it doesn't exist yet
     (ui-modal {:open open?}
       (when (seq title) (ui-modal-header {} title
                           (dom/div :.ui.right.floated.button
@@ -160,7 +166,7 @@
                                                                             (log/error e "Quick create failed.")))))}))
             top-class     (sufo/top-class form-instance attr)
             can-edit?     (?! allow-edit? form-instance qualified-key)
-            can-create?   (?! allow-create? form-instance qualified-key)
+            can-create?   (if-some [v (?! allow-create? form-instance qualified-key)] v (boolean Form))
             mutable?      (and Form (or can-edit? can-create?))
             onSelect      (fn [v] (form/input-changed! env qualified-key v))]
         (div {:className (or top-class "ui field")
@@ -221,24 +227,46 @@
             {attr-field-options ::form/field-options
              ::attr/keys        [qualified-key]} attr
             field-options      (get field-options qualified-key)
-            extra-props        (?! (form/field-style-config env attr :input/props) env)
             target-id-key      (first (keep (fn [{k ::attr/qualified-key ::attr/keys [target]}]
                                               (when (= k qualified-key) target)) attributes))
             {:keys     [style]
-             ::po/keys [cache-key query-key]} (merge attr-field-options field-options)
+             Form      ::po/form
+             ::po/keys [quick-create allow-create? allow-edit? cache-key query-key]} (merge attr-field-options field-options)
             cache-key          (or (?! cache-key (comp/react-type form-instance) (comp/props form-instance)) query-key)
             cache-key          (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
             props              (comp/props form-instance)
             options            (get-in props [::po/options-cache cache-key :options])
+            extra-props        (cond-> (?! (form/field-style-config env attr :input/props) env)
+                                       (and (= style :dropdown) quick-create)
+                                       (merge {:allowAdditions   true
+                                               :additionPosition "top"
+                                               :onAddItem        (fn [_ data]
+                                                                   #?(:cljs
+                                                                      (try
+                                                                        (let [v      (.-value ^js data)
+                                                                              entity (quick-create v)
+                                                                              id     (get entity target-id-key)
+                                                                              ident  [target-id-key id]]
+                                                                          (when (tempid/tempid? id)
+                                                                            (comp/transact! form-instance
+                                                                                            [(quick-add {:parent-ident              (comp/get-ident form-instance)
+                                                                                                         :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
+                                                                                                         :parent-relation-attribute attr
+                                                                                                         :ident                     ident
+                                                                                                         :entity                    entity})])))
+                                                                        (catch :default e
+                                                                          (log/error e "Quick create failed.")))))}))
             current-selection  (into #{}
-                                 (keep (fn [entity]
-                                         (when-let [id (get entity target-id-key)]
-                                           [target-id-key id])))
-                                 (get props qualified-key))
+                                     (keep (fn [entity]
+                                             (when-let [id (get entity target-id-key)]
+                                               [target-id-key id])))
+                                     (get props qualified-key))
             field-label        (form/field-label env attr)
             invalid?           (form/invalid-attribute-value? env attr)
             read-only?         (form/read-only? form-instance attr)
             top-class          (sufo/top-class form-instance attr)
+            can-create?        (if-some [v (?! allow-create? form-instance qualified-key)] v (boolean Form))
+            mutable?           (and Form can-create?)
             validation-message (when invalid? (form/validation-error-message env attr))]
         (div {:className (or top-class "ui field")
               :classes   [(when invalid? "error")]}
@@ -266,7 +294,24 @@
                                                (form/input-changed! env qualified-key (vec (conj current-selection value)))
                                                (form/input-changed! env qualified-key (vec (disj current-selection value))))}))
                              (dom/label text))))))
-                options))))))))
+                options))
+               (when mutable?
+                 (let [open-editor! (fn [id]
+                                      #?(:cljs (comp/transact! this
+                                                               [(start-modal-form {:parent-ident              (comp/get-ident form-instance)
+                                                                                   :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
+                                                                                   :parent-relation-attribute attr
+                                                                                   :Form                      Form
+                                                                                   :ident                     [target-id-key id]})])))]
+                   (comp/fragment {}
+                                  (ui-creation-container (merge env
+                                                                {::form/parent          form-instance
+                                                                 ::form/parent-relation qualified-key
+                                                                 :Form                  Form}))
+                                  (when can-create?
+                                    (dom/button :.ui.basic.icon.button
+                                                {:onClick (fn [] (open-editor! (tempid/tempid)))}
+                                                (dom/i :.plus.icon))))))))))))
 
 (def ui-to-many-picker (comp/factory ToManyPicker {:keyfn :id}))
 (let [ui-to-many-picker (comp/factory ToManyPicker {:keyfn (fn [{:keys [attr]}] (::attr/qualified-key attr))})]
