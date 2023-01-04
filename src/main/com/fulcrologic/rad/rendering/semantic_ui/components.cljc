@@ -80,7 +80,10 @@
                                               (when userOnChange
                                                 (userOnChange value)))
                                             (catch :default e
-                                              (log/debug "Unable to read dropdown value " e (when v (.-value v))))))})]
+                                              ;; Note: With allowAdditions enabled the value will be the raw user-typed string, not transit-encoded
+                                              ;; clj value. We can this safely ignore its error here and assume the user handles it in :onAddItem
+                                              (when-not (and (.-allowAdditions v) (not (.find (.-options v) #(= (.-value %) (.-value v)))))
+                                                (log/debug "Unable to read dropdown value " e (when v (.-value v)))))))})]
        (ui-dropdown props))
      :clj
      (dom/div :.ui.selection.dropdown
