@@ -75,7 +75,9 @@
   (remote [env]
     (let [delta {ident (reduce-kv
                          (fn [m k v]
-                           (assoc m k {:after v}))
+                           (if (= k (first ident))
+                             m
+                             (assoc m k {:after v})))
                          {}
                          entity)}]
       (-> env
