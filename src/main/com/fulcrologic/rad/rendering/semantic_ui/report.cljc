@@ -12,6 +12,7 @@
     [com.fulcrologic.fulcro.dom.events :as evt]
     [com.fulcrologic.fulcro-i18n.i18n :refer [tr trc]]
     [com.fulcrologic.rad.attributes :as attr]
+    [com.fulcrologic.rad.attributes-options :as ao]
     [com.fulcrologic.rad.control :as control]
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.options-util :refer [?!]]
@@ -229,6 +230,7 @@
                                          :label  (or
                                                    (?! (get report-column-headings qualified-key) report-instance)
                                                    (?! column-heading report-instance)
+                                                   (?! (ao/label attr) report-instance)
                                                    (some-> qualified-key name str/capitalize)
                                                    "")})
                                   columns)
