@@ -28,7 +28,7 @@
     (when (seq row-actions)
       (div {:className (or (?! report-row-button-grouping report-instance) "ui buttons")}
         (map-indexed
-          (fn [idx {:keys [label reload? visible? disabled? action] :as control}]
+          (fn [idx {:keys [label icon reload? visible? disabled? action] :as control}]
             (let [disabled?     (boolean (?! disabled? report-instance row-props))
                   onClick       (fn [evt]
                                   (evt/stop-propagation! evt)
@@ -45,11 +45,12 @@
               (when (or (nil? visible?) (?! visible? report-instance row-props))
                 (if report-row-button-renderer
                   (report-row-button-renderer report-instance row-props control-props)
-                  (if (string? label)
+                  (if (or (string? label) (and (not label) icon))
                     (dom/button :.ui.button {:key      idx
                                              :disabled disabled?
                                              :onClick  onClick}
-                      label)
+                      (when icon (dom/i {:className (str icon " icon")}))
+                      (when label label))
                     label)))))
           row-actions)))))
 
