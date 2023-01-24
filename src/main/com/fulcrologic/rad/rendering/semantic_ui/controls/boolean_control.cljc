@@ -17,29 +17,29 @@
                     (= :toggle style) true
                     :else false)]
       (if control
-       (when (or (nil? visible?) (?! visible? instance))
-         (let [label     (or (?! label instance))
-               disabled? (?! disabled? instance)
-               value     (control/current-value instance control-key)
-               inp-attr  (merge user-props
-                           {:type     "checkbox"
-                            :readOnly (boolean disabled?)
-                            :onChange (fn [_]
-                                        (control/set-parameter! instance control-key (not value))
-                                        (when onChange
-                                          (onChange instance (not value))))
-                            :checked  (boolean value)})]
-           (dom/div :.field {:key (str control-key)}
-             (if label-top?
-               (comp/fragment
-                 (dom/label label)
-                 (dom/div :.ui.fitted.checkbox {:key (str control-key) :classes [(when toggle? "toggle")]}
-                   (dom/input inp-attr)
-                   (dom/label "")))
-               (comp/fragment
-                 (dom/div :.ui.checkbox {:key (str control-key) :classes [(when toggle? "toggle")]}
-                   (dom/input inp-attr)
-                   (dom/label label)))))))
-       (log/error "Could not find control definition for " control-key)))))
+        (when (or (nil? visible?) (?! visible? instance))
+          (let [label     (or (?! label instance))
+                disabled? (?! disabled? instance)
+                value     (control/current-value instance control-key)
+                inp-attr  (merge user-props
+                            {:type     "checkbox"
+                             :readOnly (boolean disabled?)
+                             :onChange (fn [_]
+                                         (control/set-parameter! instance control-key (not value))
+                                         (when onChange
+                                           (onChange instance (not value))))
+                             :checked  (boolean value)})]
+            (dom/div :.field {:key (str control-key)}
+              (if label-top?
+                (comp/fragment
+                  (dom/label label)
+                  (dom/div :.ui.fitted.checkbox {:key (str control-key) :classes [(when toggle? "toggle")]}
+                    (dom/input inp-attr)
+                    (dom/label "")))
+                (comp/fragment
+                  (dom/div :.ui.checkbox {:key (str control-key) :classes [(when toggle? "toggle")]}
+                    (dom/input inp-attr)
+                    (dom/label label)))))))
+        (log/error "Could not find control definition for " control-key)))))
 
 (def render-control (comp/factory BooleanControl {:keyfn :control-key}))

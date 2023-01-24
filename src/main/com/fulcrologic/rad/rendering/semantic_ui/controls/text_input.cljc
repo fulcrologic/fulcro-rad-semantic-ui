@@ -30,25 +30,25 @@
                                                           actually-changed? (not= v last-sent-value)]
                                                       (when (and onChange (or run-if-unchanged? actually-changed?))
                                                         (control/set-parameter! instance control-key v)
-                                                        (control/set-parameter! instance 
+                                                        (control/set-parameter! instance
                                                           (internal-store-name control-key)
                                                           {:last-sent-value v})
                                                         ;; Change the URL parameter
                                                         (onChange instance v))))]
         (when visible?
           (let [inp (dom/input (merge user-props
-                                      {:readOnly    (boolean disabled?)
-                                       :placeholder (str placeholder)
-                                       :onChange    chg!
-                                       :onBlur      (partial run! false)
-                                       :onKeyDown   (fn [evt] (when (evt/enter? evt) (run! true evt)))
-                                       :value       (str value)}))]
-          (dom/div :.ui.field {:key (str control-key)}
-            (dom/label label)
-            (if icon
-              (dom/div :.ui.icon.input
-                (dom/i {:className (str icon " icon")})
-                inp)
-              inp))))))))
+                                 {:readOnly    (boolean disabled?)
+                                  :placeholder (str placeholder)
+                                  :onChange    chg!
+                                  :onBlur      (partial run! false)
+                                  :onKeyDown   (fn [evt] (when (evt/enter? evt) (run! true evt)))
+                                  :value       (str value)}))]
+            (dom/div :.ui.field {:key (str control-key)}
+              (dom/label label)
+              (if icon
+                (dom/div :.ui.icon.input
+                  (dom/i {:className (str icon " icon")})
+                  inp)
+                inp))))))))
 
 (def render-control (comp/factory TextControl {:keyfn :control-key}))

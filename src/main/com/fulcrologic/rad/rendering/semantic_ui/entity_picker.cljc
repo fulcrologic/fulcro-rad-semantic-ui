@@ -49,12 +49,12 @@
 
 (defn toggle-modal* [state {:keys [open? picker-id edit-id]}]
   (-> state
-      (assoc-in [::id picker-id :ui/open?] open?)
-      (assoc-in [::id picker-id :ui/edit-id] edit-id)))
+    (assoc-in [::id picker-id :ui/open?] open?)
+    (assoc-in [::id picker-id :ui/edit-id] edit-id)))
 
 (defmutation toggle-modal [params]
   (action [{:keys [state]}]
-          (swap! state toggle-modal* params)))
+    (swap! state toggle-modal* params)))
 
 (defmutation saved [{:keys [picker-id] :as params}]
   (action [{:keys [state] :as env}]
@@ -113,24 +113,24 @@
             read-only?    (or (form/read-only? master-form attr) (form/read-only? form-instance attr))
             invalid?      (and (not read-only?) (form/invalid-attribute-value? env attr))
             extra-props   (cond-> (?! (form/field-style-config env attr :input/props) env)
-                                  quick-create (merge {:allowAdditions   true
-                                                       :additionPosition "top"
-                                                       :onAddItem        (fn [_ data]
-                                                                           #?(:cljs
-                                                                              (try
-                                                                                (let [v      (.-value ^js data)
-                                                                                      entity (quick-create v)
-                                                                                      id     (get entity target-id-key)
-                                                                                      ident  [target-id-key id]]
-                                                                                  (when (tempid/tempid? id)
-                                                                                    (comp/transact! form-instance
-                                                                                                    [(quick-add {:parent-ident              (comp/get-ident form-instance)
-                                                                                                                 :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
-                                                                                                                 :parent-relation-attribute attr
-                                                                                                                 :ident                     ident
-                                                                                                                 :entity                    entity})])))
-                                                                                (catch :default e
-                                                                                  (log/error e "Quick create failed.")))))}))
+                            quick-create (merge {:allowAdditions   true
+                                                 :additionPosition "top"
+                                                 :onAddItem        (fn [_ data]
+                                                                     #?(:cljs
+                                                                        (try
+                                                                          (let [v      (.-value ^js data)
+                                                                                entity (quick-create v)
+                                                                                id     (get entity target-id-key)
+                                                                                ident  [target-id-key id]]
+                                                                            (when (tempid/tempid? id)
+                                                                              (comp/transact! form-instance
+                                                                                [(quick-add {:parent-ident              (comp/get-ident form-instance)
+                                                                                             :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
+                                                                                             :parent-relation-attribute attr
+                                                                                             :ident                     ident
+                                                                                             :entity                    entity})])))
+                                                                          (catch :default e
+                                                                            (log/error e "Quick create failed.")))))}))
             top-class     (sufo/top-class form-instance attr)
             can-edit?     (?! allow-edit? form-instance qualified-key)
             can-create?   (if-some [v (?! allow-create? form-instance qualified-key)] v (boolean Form))
@@ -139,9 +139,9 @@
 
             picker-id     (hooks/use-generated-id)
             [picker-component] (hooks/use-state (fn [] (rc/nc [:ui/open? :ui/edit-id]
-                                                              {:initial-state (constantly {})
-                                                               :ident         (fn [_ _] [::id picker-id])})))
-            _ (hooks/use-gc this [::id picker-id] #{})
+                                                         {:initial-state (constantly {})
+                                                          :ident         (fn [_ _] [::id picker-id])})))
+            _             (hooks/use-gc this [::id picker-id] #{})
             {:ui/keys [open? edit-id]} (hooks/use-component (comp/any->app this) picker-component {:initialize true})]
         (div {:className (or top-class "ui field")
               :classes   [(when invalid? "error")]}
@@ -157,11 +157,11 @@
                                       :clearable (not required?)}
                                      extra-props
                                      {:onChange (fn [v] (onSelect v))
-                                      :value     value
+                                      :value    value
                                       :disabled read-only?
-                                      :options   options}))
+                                      :options  options}))
               (when mutable?
-                (dom/div :.icon.menu ; .right ?
+                (dom/div :.icon.menu                        ; .right ?
                   (when open?
                     (ui-form-modal {:Form            Form
                                     :save-mutation   saved
@@ -174,13 +174,13 @@
                                     :id              edit-id}))
                   (when can-create?
                     (dom/button :.vertically.fitted.ui.icon.button.item
-                                {:onClick (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (tempid/tempid)})]))}
-                                (dom/i :.plus.icon)))
+                      {:onClick (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (tempid/tempid)})]))}
+                      (dom/i :.plus.icon)))
                   (when can-edit?
                     (dom/button :.vertically.fitted.ui.icon.button.item
-                                {:disabled (not (second value))
-                                 :onClick  (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (some-> value second)})]))}
-                                (dom/i :.pencil.icon))))))))))))
+                      {:disabled (not (second value))
+                       :onClick  (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (some-> value second)})]))}
+                      (dom/i :.pencil.icon))))))))))))
 
 (let [ui-to-one-picker (comp/factory ToOnePicker {:keyfn (fn [{:keys [attr]}] (::attr/qualified-key attr))})]
   (defn to-one-picker [env attribute]
@@ -243,11 +243,11 @@
             can-create?        (and Form (if-some [v (?! allow-create? form-instance qualified-key)] v (boolean Form)))
             validation-message (when invalid? (form/validation-error-message env attr))
 
-            picker-id     (hooks/use-generated-id)
+            picker-id          (hooks/use-generated-id)
             [picker-component] (hooks/use-state (fn [] (rc/nc [:ui/open? :ui/edit-id]
-                                                              {:initial-state (constantly {})
-                                                               :ident         (fn [_ _] [::id picker-id])})))
-            _ (hooks/use-gc this [::id picker-id] #{})
+                                                         {:initial-state (constantly {})
+                                                          :ident         (fn [_ _] [::id picker-id])})))
+            _                  (hooks/use-gc this [::id picker-id] #{})
             {:ui/keys [open? edit-id]} (hooks/use-component (comp/any->app this) picker-component {:initialize true})]
         (div {:className (or top-class "ui field")
               :classes   [(when invalid? "error")]}
@@ -276,21 +276,21 @@
                                                (form/input-changed! env qualified-key (vec (disj current-selection value))))}))
                              (dom/label text))))))
                 options))
-               (dom/div :.icon.menu ; .right ?
-                 (when open?
-                   (ui-form-modal {:Form            Form
-                                   :save-mutation   saved
-                                   :save-params     {:picker-id                 picker-id
-                                                     :parent-ident              (comp/get-ident form-instance)
-                                                     :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
-                                                     :parent-relation-attribute attr}
-                                   :cancel-mutation cancel
-                                   :cancel-params   {:picker-id picker-id}
-                                   :id              edit-id}))
-                 (when can-create?
-                   (dom/button :.vertically.fitted.ui.icon.button.item
-                               {:onClick (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (tempid/tempid)})]))}
-                               (dom/i :.plus.icon))))))))))
+            (dom/div :.icon.menu                            ; .right ?
+              (when open?
+                (ui-form-modal {:Form            Form
+                                :save-mutation   saved
+                                :save-params     {:picker-id                 picker-id
+                                                  :parent-ident              (comp/get-ident form-instance)
+                                                  :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
+                                                  :parent-relation-attribute attr}
+                                :cancel-mutation cancel
+                                :cancel-params   {:picker-id picker-id}
+                                :id              edit-id}))
+              (when can-create?
+                (dom/button :.vertically.fitted.ui.icon.button.item
+                  {:onClick (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (tempid/tempid)})]))}
+                  (dom/i :.plus.icon))))))))))
 
 (def ui-to-many-picker (comp/factory ToManyPicker {:keyfn :id}))
 (let [ui-to-many-picker (comp/factory ToManyPicker {:keyfn (fn [{:keys [attr]}] (::attr/qualified-key attr))})]

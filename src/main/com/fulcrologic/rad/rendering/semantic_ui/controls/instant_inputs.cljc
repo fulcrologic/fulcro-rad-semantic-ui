@@ -27,13 +27,13 @@
   "Display the date the user selects, but control a value that is midnight on the next date. Used for generating ending
   instants that can be used for a proper non-inclusive end date."
   [_ {:keys [value onChange] :as props}]
-  (let [value        (if (nil? value)
-                       ""
-                       (-> value
-                           dt/inst->local-datetime
-                           (ldt/minus-days 1)
-                           ldt/to-local-date
-                           dt/local-date->html-date-string))]
+  (let [value (if (nil? value)
+                ""
+                (-> value
+                  dt/inst->local-datetime
+                  (ldt/minus-days 1)
+                  ldt/to-local-date
+                  dt/local-date->html-date-string))]
     (dom/input
       (merge props
         {:value    value
@@ -41,10 +41,10 @@
          :onChange (fn [evt]
                      (when onChange
                        (onChange (some-> (evt/target-value evt)
-                                         (dt/html-date-string->local-date)
-                                         (ld/plus-days 1)
-                                         (ld/at-time lt/midnight)
-                                         (dt/local-datetime->inst)))))}))))
+                                   (dt/html-date-string->local-date)
+                                   (ld/plus-days 1)
+                                   (ld/at-time lt/midnight)
+                                   (dt/local-datetime->inst)))))}))))
 
 (defn ui-date-time-instant-input [_ {:keys [disabled? value onChange] :as props}]
   (let [value (if (nil? value) "" (dt/inst->html-datetime-string value))]
