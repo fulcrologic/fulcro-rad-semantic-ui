@@ -150,14 +150,15 @@
             (let [value (first (filter #(= value (:value %)) options))]
               (:text value))
             (dom/div :.ui.small.menu {:style {:marginTop 0}}
-              (ui-wrapped-dropdown (merge extra-props
+              (ui-wrapped-dropdown (merge
                                      {:style     {:flexGrow 1}
                                       :className "item"
-                                      :onChange  (fn [v] (onSelect v))
                                       :compact   true
+                                      :clearable (not required?)}
+                                     extra-props
+                                     {:onChange (fn [v] (onSelect v))
                                       :value     value
-                                      :clearable (not required?)
-                                      :disabled  read-only?
+                                      :disabled read-only?
                                       :options   options}))
               (when mutable?
                 (dom/div :.icon.menu ; .right ?
