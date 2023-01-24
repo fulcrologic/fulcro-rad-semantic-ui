@@ -149,38 +149,47 @@
           (if read-only?
             (let [value (first (filter #(= value (:value %)) options))]
               (:text value))
-            (dom/div :.ui.small.menu {:style {:marginTop 0}}
+            (if (not mutable?)
               (ui-wrapped-dropdown (merge
-                                     {:style     {:flexGrow 1}
-                                      :className "item"
-                                      :compact   true
-                                      :clearable (not required?)}
-                                     extra-props
-                                     {:onChange (fn [v] (onSelect v))
-                                      :value    value
-                                      :disabled read-only?
-                                      :options  options}))
-              (when mutable?
-                (dom/div :.icon.menu                        ; .right ?
-                  (when open?
-                    (ui-form-modal {:Form            Form
-                                    :save-mutation   saved
-                                    :save-params     {:picker-id                 picker-id
-                                                      :parent-ident              (comp/get-ident form-instance)
-                                                      :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
-                                                      :parent-relation-attribute attr}
-                                    :cancel-mutation cancel
-                                    :cancel-params   {:picker-id picker-id}
-                                    :id              edit-id}))
-                  (when can-create?
-                    (dom/button :.vertically.fitted.ui.icon.button.item
-                      {:onClick (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (tempid/tempid)})]))}
-                      (dom/i :.plus.icon)))
-                  (when can-edit?
-                    (dom/button :.vertically.fitted.ui.icon.button.item
-                      {:disabled (not (second value))
-                       :onClick  (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (some-> value second)})]))}
-                      (dom/i :.pencil.icon))))))))))))
+                                    {:className "ui fluid"
+                                     :compact   true
+                                     :clearable (not required?)}
+                                    extra-props
+                                    {:onChange  (fn [v] (onSelect v))
+                                     :value     value
+                                     :disabled  read-only?
+                                     :options   options}))
+              (dom/div :.ui.horizontal.segments
+                {:style {:marginTop 0, :box-shadow "none"}}
+                (ui-wrapped-dropdown (merge
+                                      {:className "ui compact segment attached left"
+                                       :compact   true
+                                       :clearable (not required?)}
+                                      extra-props
+                                      {:onChange  (fn [v] (onSelect v))
+                                       :value     value
+                                       :disabled  read-only?
+                                       :options   options}))
+                (when open?
+                  (ui-form-modal {:Form            Form
+                                  :save-mutation   saved
+                                  :save-params     {:picker-id                 picker-id
+                                                    :parent-ident              (comp/get-ident form-instance)
+                                                    :parent-registry-key       (comp/class->registry-key (comp/get-class form-instance))
+                                                    :parent-relation-attribute attr}
+                                  :cancel-mutation cancel
+                                  :cancel-params   {:picker-id picker-id}
+                                  :id              edit-id}))
+                (when can-create?
+                  (dom/button :.ui.icon.mini.button.attached
+                    {:classes [(when-not can-edit? "right")]
+                     :onClick (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (tempid/tempid)})]))}
+                    (dom/i :.plus.icon)))
+                (when can-edit?
+                  (dom/button :.ui.icon.mini.button.right.attached
+                    {:disabled (not (second value))
+                     :onClick  (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (some-> value second)})]))}
+                    (dom/i :.pencil.icon)))))))))))
 
 (let [ui-to-one-picker (comp/factory ToOnePicker {:keyfn (fn [{:keys [attr]}] (::attr/qualified-key attr))})]
   (defn to-one-picker [env attribute]
