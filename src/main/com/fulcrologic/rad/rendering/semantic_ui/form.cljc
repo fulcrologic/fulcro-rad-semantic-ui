@@ -79,7 +79,7 @@
       (div {:className body-class :key (str k)}
         (h3 title (span ent/nbsp ent/nbsp) (when (or (nil? add-position) (= :top add-position)) add))
         (when invalid?
-          (div :.ui.error.message
+          (div :.ui.red.message
             validation-message))
         (if (seq items)
           (div {:className (or (?! ref-container-class env) "ui segments")}
@@ -123,7 +123,7 @@
                 :classes   [(?! ref-container-class env)]}
             (h3 :.ui.header title)
             (when invalid?
-              (div :.ui.error.message validation-message))
+              (div :.ui.red.message validation-message))
             (ui-factory props (merge env std-props)))))
 
       (or (nil? can-add?) (?! can-add? form-instance attr))
@@ -395,9 +395,9 @@
           (div {:classes [(or (?! (comp/component-options form-instance ::form-class) env) "ui attached form")
                           (when errors? "error")]}
             (when invalid?
-              (div :.ui.error.message (tr "The form has errors and cannot be saved.")))
+              (div :.ui.red.message (tr "The form has errors and cannot be saved.")))
             (when (seq errors)
-              (div :.ui.error.message
+              (div :.ui.red.message
                 (div :.content
                   (dom/div :.ui.list
                     (map-indexed
