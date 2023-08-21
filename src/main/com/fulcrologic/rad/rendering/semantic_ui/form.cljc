@@ -25,7 +25,7 @@
 (defn render-to-many [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
   (let [{:semantic-ui/keys [add-position]
          ::form/keys       [ui title can-delete? can-add? added-via-upload?]
-         ::keys            [ref-container-class]} (log/spy :info (get subforms k))
+         ::keys            [ref-container-class]} (get subforms k)
         form-instance-props (comp/props form-instance)
         read-only?          (form/read-only? form-instance attr)
         add?                (if read-only? false (?! can-add? form-instance attr))

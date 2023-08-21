@@ -3,9 +3,11 @@
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     #?@(:cljs [[com.fulcrologic.fulcro.dom :as dom :refer [div input]]
                [goog.object :as gobj]
+               [com.fulcrologic.semantic-ui.modules.progress.ui-progress :refer [ui-progress]]
                [com.fulcrologic.fulcro.networking.file-upload :as file-upload]]
         :clj  [[com.fulcrologic.fulcro.dom-server :as dom :refer [div input]]])
     [com.fulcrologic.rad.form :as form]
+    [clojure.core.async :as async]
     [com.fulcrologic.fulcro-i18n.i18n :refer [tr]]
     [com.fulcrologic.rad.attributes :as attr]
     [taoensso.timbre :as log]
@@ -25,49 +27,58 @@
                 js-file))
          (range (.-length js-file-list))))))
 
-#_(defsc ImageUploadField [this
-                           {::form/keys [form-instance] :as env}
-                           {::blob/keys [accept-file-types]
-                            ::attr/keys [qualified-key] :as attribute}]
-    {:initLocalState (fn [this]
-                       #?(:cljs
-                          {:save-ref  (fn [r] (gobj/set this "fileinput" r))
-                           :on-click  (fn [evt] (when-let [i (gobj/get this "fileinput")]
-                                                  (.click i)))
-                           :on-change (fn [evt]
-                                        (let [env       (comp/props this)
-                                              attribute (comp/get-computed this)
-                                              file      (-> evt evt->js-files first)]
-                                          (blob/upload-file! env attribute file)))}))}
-    (let [props              (comp/props form-instance)
-          url-key            (narrow-keyword qualified-key "url")
-          current-sha        (get props qualified-key)
-          url                (get props url-key)
-          has-current-value? (seq current-sha)
-          {:keys [save-ref on-change on-click]} (comp/get-state this)
-          upload-complete?   false
-          label              (form/field-label env attribute)
-          valid?             (and upload-complete? has-current-value?)]
-      (div :.field {:key (str qualified-key)}
-        (dom/label label)
-        (div :.ui.tiny.image
-          (dom/img {:src     url :width "100"
-                    :onClick on-click})
-          (dom/input (cond-> {:id       (str qualified-key)
-                              :ref      save-ref
-                              :style    {:position "absolute"
-                                         :opacity  0
-                                         :top      0
-                                         :right    0}
-                              :onChange on-change
-                              :type     "file"}
-                       accept-file-types (assoc :allow (?! accept-file-types))))))))
+(defsc ImageUploadField [this
+                         {::form/keys [form-instance] :as env}
+                         {::blob/keys [accept-file-types]
+                          ::attr/keys [qualified-key] :as attribute}]
+  {:initLocalState (fn [this]
+                     #?(:cljs
+                        {:save-ref  (fn [r] (gobj/set this "fileinput" r))
+                         :on-click  (fn [evt] (when-let [i (gobj/get this "fileinput")]
+                                                (.click i)))
+                         :on-change (fn [evt]
+                                      (let [{::form/keys [form-instance]} (comp/props this)
+                                            attribute (comp/get-computed this)
+                                            file      (-> evt evt->js-files first)]
+                                        (blob/upload-file! this attribute file {:file-ident (comp/get-ident form-instance)})))}))}
+  #?(:cljs
+     (let [props              (comp/props form-instance)
+           url-key            (narrow-keyword qualified-key "url")
+           status             (get props (blob/status-key qualified-key))
+           progress           (get props (blob/progress-key qualified-key))
+           url                (get props url-key)
+           {:keys [save-ref on-change on-click]} (comp/get-state this)
+           label              (form/field-label env attribute)]
+       (div :.field {:key     (str qualified-key)
+                     :onClick (fn []
+                                (when (not= status :uploading)
+                                  (on-click)))}
+         (dom/label label)
+         (div :.ui.tiny.image
+           (case status
+             :uploading (dom/div :.ui.segment {:style {:minHeight "100px"}}
+                          (dom/div :.ui.active.loader)
+                          (ui-progress {:active true :percent (or progress 0) :attached "bottom"}))
+             :failed (dom/div :.ui.segment {:style {:minHeight "100px"}}
+                       "Upload failed.")
+             (dom/img :.ui.tiny.image {:src   url
+                                       :style {:border "1px solid lightgray"}}))
+           (dom/input (cond-> {:id       (str qualified-key)
+                               :ref      save-ref
+                               :style    {:position "absolute"
+                                          :opacity  0
+                                          :top      0
+                                          :right    0}
+                               :key      (rand-int 1000000)
+                               :onChange on-change
+                               :type     "file"}
+                        accept-file-types (assoc :allow (?! accept-file-types)))))))))
 
-#_(def ui-image-upload-field (comp/computed-factory ImageUploadField
-                               {:keyfn (fn [props] (some-> props comp/get-computed ::attr/qualified-key))}))
+(def ui-image-upload-field (comp/computed-factory ImageUploadField
+                             {:keyfn (fn [props] (some-> props comp/get-computed ::attr/qualified-key))}))
 
-#_(defn render-image-upload [env attribute]
-    (ui-image-upload-field env attribute))
+(defn render-image-upload [env attribute]
+  (ui-image-upload-field env attribute))
 
 (defsc FileUploadField [this
                         {::form/keys [form-instance master-form] :as env}
