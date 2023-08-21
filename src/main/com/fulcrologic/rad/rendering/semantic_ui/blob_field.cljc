@@ -42,13 +42,13 @@
                                             file      (-> evt evt->js-files first)]
                                         (blob/upload-file! this attribute file {:file-ident (comp/get-ident form-instance)})))}))}
   #?(:cljs
-     (let [props              (comp/props form-instance)
-           url-key            (narrow-keyword qualified-key "url")
-           status             (get props (blob/status-key qualified-key))
-           progress           (get props (blob/progress-key qualified-key))
-           url                (get props url-key)
+     (let [props    (comp/props form-instance)
+           url-key  (narrow-keyword qualified-key "url")
+           status   (get props (blob/status-key qualified-key))
+           progress (get props (blob/progress-key qualified-key))
+           url      (get props url-key)
            {:keys [save-ref on-change on-click]} (comp/get-state this)
-           label              (form/field-label env attribute)]
+           label    (form/field-label env attribute)]
        (div :.field {:key     (str qualified-key)
                      :onClick (fn []
                                 (when (not= status :uploading)
@@ -61,8 +61,10 @@
                           (ui-progress {:active true :percent (or progress 0) :attached "bottom"}))
              :failed (dom/div :.ui.segment {:style {:minHeight "100px"}}
                        "Upload failed.")
-             (dom/img :.ui.tiny.image {:src   url
-                                       :style {:border "1px solid lightgray"}}))
+             (if (seq url)
+               (dom/img :.ui.tiny.image {:src   url
+                                         :style {:border "1px solid lightgray"}})
+               (dom/div :.ui.segment {:style {:minHeight "100px"}})))
            (dom/input (cond-> {:id       (str qualified-key)
                                :ref      save-ref
                                :style    {:position "absolute"
