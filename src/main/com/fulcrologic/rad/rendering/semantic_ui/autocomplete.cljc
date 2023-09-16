@@ -42,7 +42,7 @@
 
 (defsc AutocompleteField [this {:ui/keys [search-string options] :as props} {:keys [value label onChange
                                                                                     invalid? validation-message
-                                                                                    className
+                                                                                    className omit-label?
                                                                                     read-only?]}]
   {:initLocalState    (fn [this]
                         ;; Possible problem???: props not making it...fix that, or debounce isn't configurable.
@@ -80,7 +80,8 @@
        :cljs
        (dom/div :.field {:className (or className "field")
                          :classes   [(when invalid? "error")]}
-         (dom/label label (when invalid? (str " " validation-message)))
+         (when-not omit-label?
+           (dom/label label (when invalid? (dom/span " " validation-message))))
          (if read-only?
            (gobj/getValueByKeys options 0 "text")
            (ui-dropdown #js {:search             true
@@ -97,7 +98,9 @@
                              :onChange           (fn [_ v]
                                                    (when onChange
                                                      (onChange (some-> (comp/isoget v "value")
-                                                                 read-string))))}))))))
+                                                                 read-string))))}))
+         (when (and invalid? omit-label?)
+           (dom/div :.red validation-message))))))
 
 (def ui-autocomplete-field (comp/computed-factory AutocompleteField {:keyfn ::autocomplete-id}))
 
@@ -133,6 +136,7 @@
         id                 (comp/get-state this :field-id)
         label              (form/field-label env attribute)
         read-only?         (form/read-only? form-instance attribute)
+        omit-label?        (form/omit-label? form-instance attribute)
         invalid?           (form/invalid-attribute-value? env attribute)
         validation-message (when invalid? (form/validation-error-message env attribute))
         field              (get-in props [::autocomplete-id id])]
@@ -148,6 +152,7 @@
                :validation-message validation-message
                :label              label
                :read-only?         read-only?
+               :omit-label?        omit-label?
                :onChange           (fn [normalized-value]
                                      #?(:cljs
                                         (when normalized-value (form/input-changed! env k normalized-value))))}

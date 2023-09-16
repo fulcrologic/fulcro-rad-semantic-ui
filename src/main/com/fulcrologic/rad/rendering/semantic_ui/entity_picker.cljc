@@ -111,6 +111,7 @@
             value         [target-id-key (get-in props [qualified-key target-id-key])]
             field-label   (form/field-label env attr)
             read-only?    (or (form/read-only? master-form attr) (form/read-only? form-instance attr))
+            omit-label?   (form/omit-label? form-instance attr)
             invalid?      (and (not read-only?) (form/invalid-attribute-value? env attr))
             extra-props   (cond-> (?! (form/field-style-config env attr :input/props) env)
                             quick-create (merge {:allowAdditions   true
@@ -145,31 +146,32 @@
             {:ui/keys [open? edit-id]} (hooks/use-component (comp/any->app this) picker-component {:initialize true})]
         (div {:className (or top-class "ui field")
               :classes   [(when invalid? "error")]}
-          (dom/label field-label (when invalid? (str " (" (tr "Required") ")")))
+          (when-not omit-label?
+            (dom/label field-label (when invalid? (str " (" (tr "Required") ")"))))
           (if read-only?
             (let [value (first (filter #(= value (:value %)) options))]
               (:text value))
             (if (not mutable?)
               (ui-wrapped-dropdown (merge
-                                    {:className "ui fluid"
-                                     :compact   true
-                                     :clearable (not required?)}
-                                    extra-props
-                                    {:onChange  (fn [v] (onSelect v))
-                                     :value     value
-                                     :disabled  read-only?
-                                     :options   options}))
+                                     {:className "ui fluid"
+                                      :compact   true
+                                      :clearable (not required?)}
+                                     extra-props
+                                     {:onChange (fn [v] (onSelect v))
+                                      :value    value
+                                      :disabled read-only?
+                                      :options  options}))
               (dom/div :.ui.horizontal.segments
-                {:style {:marginTop 0, :box-shadow "none"}}
+                {:style {:marginTop 0, :boxShadow "none"}}
                 (ui-wrapped-dropdown (merge
-                                      {:className "ui compact segment attached left"
-                                       :compact   true
-                                       :clearable (not required?)}
-                                      extra-props
-                                      {:onChange  (fn [v] (onSelect v))
-                                       :value     value
-                                       :disabled  read-only?
-                                       :options   options}))
+                                       {:className "ui compact segment attached left"
+                                        :compact   true
+                                        :clearable (not required?)}
+                                       extra-props
+                                       {:onChange (fn [v] (onSelect v))
+                                        :value    value
+                                        :disabled read-only?
+                                        :options  options}))
                 (when open?
                   (ui-form-modal {:Form            Form
                                   :save-mutation   saved
@@ -189,7 +191,10 @@
                   (dom/button :.ui.icon.mini.button.right.attached
                     {:disabled (not (second value))
                      :onClick  (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (some-> value second)})]))}
-                    (dom/i :.pencil.icon)))))))))))
+                    (dom/i :.pencil.icon))))))
+          (when (and invalid? omit-label?)
+            (dom/div :.red
+              (tr "Required"))))))))
 
 (let [ui-to-one-picker (comp/factory ToOnePicker {:keyfn (fn [{:keys [attr]}] (::attr/qualified-key attr))})]
   (defn to-one-picker [env attribute]
@@ -248,6 +253,7 @@
             field-label        (form/field-label env attr)
             invalid?           (form/invalid-attribute-value? env attr)
             read-only?         (form/read-only? form-instance attr)
+            omit-label?        (form/omit-label? form-instance attr)
             top-class          (sufo/top-class form-instance attr)
             can-create?        (and Form (if-some [v (?! allow-create? form-instance qualified-key)] v (boolean Form)))
             validation-message (when invalid? (form/validation-error-message env attr))
@@ -260,7 +266,8 @@
             {:ui/keys [open? edit-id]} (hooks/use-component (comp/any->app this) picker-component {:initialize true})]
         (div {:className (or top-class "ui field")
               :classes   [(when invalid? "error")]}
-          (dom/label field-label " " (when invalid? validation-message))
+          (when-not omit-label?
+            (dom/label field-label " " (when invalid? validation-message)))
           (div :.ui.middle.aligned.celled.list.big
             {:style {:marginTop "0"}}
             (if (= style :dropdown)
@@ -299,7 +306,9 @@
               (when can-create?
                 (dom/button :.vertically.fitted.ui.icon.button.item
                   {:onClick (fn [] (comp/transact! this [(toggle-modal {:open? true, :picker-id picker-id, :edit-id (tempid/tempid)})]))}
-                  (dom/i :.plus.icon))))))))))
+                  (dom/i :.plus.icon)))))
+          (when (and invalid? omit-label?)
+            (dom/div nil validation-message)))))))
 
 (def ui-to-many-picker (comp/factory ToManyPicker {:keyfn :id}))
 (let [ui-to-many-picker (comp/factory ToManyPicker {:keyfn (fn [{:keys [attr]}] (::attr/qualified-key attr))})]

@@ -19,6 +19,7 @@
         field-label (form/field-label env attribute)
         visible?    (form/field-visible? form-instance attribute)
         read-only?  (form/read-only? form-instance attribute)
+        omit-label?  (form/omit-label? form-instance attribute)
         top-class   (sufo/top-class form-instance attribute)
         value       (get props k false)]
     (when visible?
@@ -34,5 +35,5 @@
                                   (form/input-blur! env k v)
                                   (form/input-changed! env k v)))}
                    user-props))
-          (label field-label))))))
+          (when-not omit-label? (label field-label)))))))
 

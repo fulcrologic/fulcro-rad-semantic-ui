@@ -4,7 +4,7 @@
     [com.fulcrologic.fulcro.components :as comp]))
 
 (def ref-container-class
-  "This option can be used in the ::fo/subforms entries to indicate what class(es) should be set on the element that wraps
+  "This option can be used in the fo/subforms entries to indicate what class(es) should be set on the element that wraps
   the list of elements. Defaults to `ui segments` for to-many and nothing for to-one relations. Can also be a
   `(fn [form-env] string?)`"
   :com.fulcrologic.rad.rendering.semantic-ui.form/ref-container-class)
