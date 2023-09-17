@@ -7,20 +7,20 @@
          [com.fulcrologic.semantic-ui.modules.dropdown.ui-dropdown :refer [ui-dropdown]]]
         :clj
         [[com.fulcrologic.fulcro.dom-server :as dom :refer [div label input]]])
-    [com.fulcrologic.rad.ids :as ids]
-    [com.fulcrologic.fulcro.rendering.multiple-roots-renderer :as mroot]
+    [clojure.string :as str]
+    [com.fulcrologic.fulcro.algorithms.merge :as merge]
+    [com.fulcrologic.fulcro.algorithms.normalized-state :as fns]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
     [com.fulcrologic.fulcro.data-fetch :as df]
     [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
-    [com.fulcrologic.fulcro.algorithms.merge :as merge]
-    [com.fulcrologic.rad.options-util :as opts]
-    [com.fulcrologic.rad.rendering.semantic-ui.components :refer [ui-wrapped-dropdown]]
+    [com.fulcrologic.fulcro.rendering.multiple-roots-renderer :as mroot]
     [com.fulcrologic.rad.attributes :as attr]
-    [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
-    [clojure.string :as str]
-    [taoensso.timbre :as log]
     [com.fulcrologic.rad.form :as form]
-    [com.fulcrologic.fulcro.algorithms.normalized-state :as fns]))
+    [com.fulcrologic.rad.form-options :as fo]
+    [com.fulcrologic.rad.ids :as ids]
+    [com.fulcrologic.rad.options-util :as opts]
+    [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
+    [taoensso.timbre :as log]))
 
 (defsc AutocompleteQuery [_ _] {:query [:text :value]})
 
@@ -113,8 +113,9 @@
   {:initLocalState        (fn [this] {:field-id (ids/new-uuid)})
    :componentDidMount     (fn [this]
                             (let [id (comp/get-state this :field-id)
-                                  {:keys [attribute]} (comp/get-computed this)
-                                  {:autocomplete/keys [search-key debounce-ms minimum-input]} (::form/field-options attribute)]
+                                  {:keys [env attribute]} (comp/get-computed this)
+                                  {::form/keys [form-instance]} env
+                                  {:autocomplete/keys [search-key debounce-ms minimum-input]} (fo/get-field-options (comp/component-options form-instance) attribute)]
                               (merge/merge-component! this AutocompleteField {::autocomplete-id           id
                                                                               :autocomplete/search-key    search-key
                                                                               :autocomplete/debounce-ms   debounce-ms
@@ -128,7 +129,7 @@
                             (comp/transact! this [(gc-autocomplete {:id (comp/get-state this :field-id)})])
                             (mroot/deregister-root! this))
    :query                 [::autocomplete-id]}
-  (let [{:autocomplete/keys [debounce-ms search-key preload?]} (::form/field-options attribute)
+  (let [{:autocomplete/keys [debounce-ms search-key preload?]} (fo/get-field-options (comp/component-options this) attribute)
         k                  (::attr/qualified-key attribute)
         {::form/keys [form-instance]} env
         top-class          (sufo/top-class form-instance attribute)

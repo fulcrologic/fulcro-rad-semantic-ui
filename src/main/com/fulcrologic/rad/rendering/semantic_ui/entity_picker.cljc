@@ -89,21 +89,22 @@
 
 (defsc ToOnePicker [this {:keys [env attr]}]
   {:use-hooks? true}
-  (hooks/use-lifecycle (fn []
-                         (let [{:keys [env attr]} (comp/props this)
-                               form-instance (::form/form-instance env)
-                               props         (comp/props form-instance)
-                               form-class    (comp/react-type form-instance)]
-                           (po/load-options! form-instance form-class props attr))))
   (let [{::form/keys [master-form form-instance]} env
         visible? (form/field-visible? form-instance attr)]
+    (hooks/use-lifecycle (fn []
+                           (let [{:keys [env attr]} (comp/props this)
+                                 props      (comp/props form-instance)
+                                 form-class (comp/react-type form-instance)]
+                             (po/load-options! form-instance form-class props attr))))
     (when visible?
-      (let [{::form/keys [field-options]} (comp/component-options form-instance)
+      (let [field-options (fo/get-field-options (comp/component-options form-instance) attr)
             {::attr/keys [qualified-key required?]} attr
-            field-options (get field-options qualified-key)
             target-id-key (ao/target attr)
             {Form      ::po/form
              ::po/keys [quick-create allow-edit? allow-create? cache-key query-key]} (merge attr field-options)
+            Form          (?! (cond-> Form
+                                (keyword? Form) (rc/registry-key->class))
+                            form-instance attr)
             props         (comp/props form-instance)
             cache-key     (or (?! cache-key (comp/react-type form-instance) props) query-key)
             cache-key     (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
@@ -212,15 +213,14 @@
   (let [{::form/keys [form-instance]} env
         visible? (form/field-visible? form-instance attr)]
     (when visible?
-      (let [{::form/keys [attributes field-options]} (comp/component-options form-instance)
-            {attr-field-options ::form/field-options
-             ::attr/keys        [qualified-key]} attr
-            field-options      (get field-options qualified-key)
+      (let [{::form/keys [attributes] :as form-options} (comp/component-options form-instance)
+            field-options      (fo/get-field-options form-options attr)
+            {::attr/keys [qualified-key]} attr
             target-id-key      (first (keep (fn [{k ::attr/qualified-key ::attr/keys [target]}]
                                               (when (= k qualified-key) target)) attributes))
             {:keys     [style]
              Form      ::po/form
-             ::po/keys [quick-create allow-create? allow-edit? cache-key query-key]} (merge attr-field-options field-options)
+             ::po/keys [quick-create allow-create? allow-edit? cache-key query-key]} field-options
             cache-key          (or (?! cache-key (comp/react-type form-instance) (comp/props form-instance)) query-key)
             cache-key          (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
             props              (comp/props form-instance)

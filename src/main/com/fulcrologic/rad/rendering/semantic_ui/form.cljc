@@ -22,10 +22,10 @@
     [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
     [com.fulcrologic.rad.semantic-ui-options :as suo]))
 
-(defn render-to-many [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
+(defn render-to-many [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} options]
   (let [{:semantic-ui/keys [add-position]
          ::form/keys       [ui title can-delete? can-add? added-via-upload?]
-         ::keys            [ref-container-class]} (get subforms k)
+         ::keys            [ref-container-class]} (fo/subform-options (comp/component-options form-instance) attr)
         form-instance-props (comp/props form-instance)
         read-only?          (form/read-only? form-instance attr)
         add?                (if read-only? false (?! can-add? form-instance attr))
@@ -96,8 +96,8 @@
         (when (= :bottom add-position) add)))))
 
 (defn render-to-one [{::form/keys [master-form
-                                   form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
-  (let [{::form/keys [ui can-add? can-delete? title ref-container-class]} (get subforms k)
+                                   form-instance] :as env} {k ::attr/qualified-key :as attr} options]
+  (let [{::form/keys [ui can-add? can-delete? title ref-container-class]} (fo/subform-options options attr)
         form-props (comp/props form-instance)
         props      (get form-props k)
         top-class  (or (sufo/top-class form-instance attr) "")]
@@ -154,8 +154,8 @@
     (render-to-many env attr options)
     (render-to-one env attr options)))
 
-(defn render-single-file [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} {::form/keys [subforms] :as options}]
-  (let [{::form/keys [ui can-delete?]} (get subforms k)
+(defn render-single-file [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} options]
+  (let [{::form/keys [ui can-delete?]} (fo/subform-options options attr)
         parent     (comp/props form-instance)
         form-props (comp/props form-instance)
         props      (get form-props k)
@@ -181,10 +181,10 @@
 
 (defsc ManyFiles [this {{::form/keys [form-instance master-form] :as env} :env
                         {k ::attr/qualified-key :as attr}                 :attribute
-                        {::form/keys [subforms] :as options}              :options}]
+                        options                                           :options}]
   {:initLocalState (fn [this] {:input-key (str (rand-int 1000000))})}
   (let [{:semantic-ui/keys [add-position]
-         ::form/keys       [ui title can-delete? can-add? sort-children]} (get subforms k)
+         ::form/keys       [ui title can-delete? can-add? sort-children]} (fo/subform-options options attr)
         form-instance-props (comp/props form-instance)
         read-only?          (or
                               (form/read-only? master-form attr)
@@ -256,8 +256,9 @@
     (ui-many-files {:env env :attribute attr :options options})
     (render-single-file env attr options)))
 
-(defn render-attribute [env attr {::form/keys [subforms] :as options}]
-  (let [{k ::attr/qualified-key} attr]
+(defn render-attribute [env attr options]
+  (let [{k ::attr/qualified-key} attr
+        subforms (fo/subform-options options attr)]
     (if (contains? subforms k)
       (let [render-ref (or (form/ref-container-renderer env attr) standard-ref-container)]
         (render-ref env attr options))
