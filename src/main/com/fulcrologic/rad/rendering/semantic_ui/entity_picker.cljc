@@ -102,9 +102,7 @@
             target-id-key (ao/target attr)
             {Form      ::po/form
              ::po/keys [quick-create allow-edit? allow-create? cache-key query-key]} (merge attr field-options)
-            Form          (?! (cond-> Form
-                                (keyword? Form) (rc/registry-key->class))
-                            form-instance attr)
+            Form          (?! (some-> Form (rc/registry-key->class)) form-instance attr)
             props         (comp/props form-instance)
             cache-key     (or (?! cache-key (comp/react-type form-instance) props) query-key)
             cache-key     (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
