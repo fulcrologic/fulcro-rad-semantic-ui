@@ -31,7 +31,9 @@
                           :file-as-icon sui-form/file-icon-renderer}
     :form-body-container {:default sui-form/standard-form-layout-renderer}
     :ref-container       {:default sui-form/standard-ref-container
-                          :file    sui-form/file-ref-container}}
+                          :file    sui-form/file-ref-container}
+    ;; If you set `fo/confirm :async` on a form, this UI is used for confirmation instead:
+    :async-abandon-modal {:default sui-form/standard-abandon-modal}}
 
    :com.fulcrologic.rad.form/type->style->control
    {:text    {:default text-field/render-field}

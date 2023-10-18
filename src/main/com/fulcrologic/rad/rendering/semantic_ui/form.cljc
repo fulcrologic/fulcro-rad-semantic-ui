@@ -344,6 +344,18 @@
 
 (declare standard-form-layout-renderer)
 
+(defn standard-abandon-modal [{::form/keys [form-instance] :as env} open?]
+  (ui-modal {:open open?}
+    (ui-modal-content {}
+      (tr "The form has unsaved changes. Do you wish to abandon the changes or return to editing?"))
+    (ui-modal-actions {}
+      (dom/button :.ui.button
+        {:onClick (fn [] (form/clear-route-denied! form-instance))}
+        (tr "Return to Editing"))
+      (dom/button :.ui.button
+        {:onClick (fn [] (form/continue-abandoned-route! form-instance))}
+        (tr "Abandon Changes")))))
+
 (defsc StandardFormContainer [this {::form/keys [props computed-props form-instance master-form] :as env}]
   {:shouldComponentUpdate (fn [_ _ _] true)}
   (let [{::form/keys [can-delete?]} computed-props
@@ -370,25 +382,18 @@
                                                             :onClick  (fn [] (form/delete-child! env))}
               (i :.times.icon)))
           (render-fields env)))
-      (let [{::form/keys [title action-buttons controls show-header?]} (comp/component-options form-instance)
+      (let [{::form/keys [title action-buttons show-header?]} (comp/component-options form-instance)
             {:ui/keys [route-denied?]} (comp/props form-instance)
             title          (?! title form-instance props)
             action-buttons (if action-buttons action-buttons form/standard-action-buttons)
             show-header?   (cond
                              (some? show-header?) (?! show-header? master-form)
                              (some? (fo/show-header? computed-props)) (?! (fo/show-header? computed-props) master-form)
-                             :else true)]
+                             :else true)
+            abandon-modal  (form/render-fn env :async-abandon-modal)]
         (comp/fragment
-          (ui-modal {:open route-denied?}
-            (ui-modal-content {}
-              "The form has unsaved changes. Do you wish to abandon the changes, or return to editing?")
-            (ui-modal-actions {}
-              (dom/button :.ui.button
-                {:onClick (fn [] (form/clear-route-denied! form-instance))}
-                "Return to Editing")
-              (dom/button :.ui.button
-                {:onClick (fn [] (form/continue-abandoned-route! form-instance))}
-                "Abandon Changes")))
+          (when (fn? abandon-modal)
+            (abandon-modal env route-denied?))
           (div {:key       (str (comp/get-ident form-instance))
                 :className (or
                              (?! (suo/get-rendering-options form-instance suo/layout-class) env)
