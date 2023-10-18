@@ -1,26 +1,29 @@
 (ns com.fulcrologic.rad.rendering.semantic-ui.form
   (:require
-    [com.fulcrologic.fulcro-i18n.i18n :refer [tr trf trc]]
-    [com.fulcrologic.rad.attributes :as attr]
-    [com.fulcrologic.rad.options-util :refer [?! narrow-keyword]]
-    [com.fulcrologic.rad.form :as form]
-    [com.fulcrologic.rad.form-options :as fo]
-    [com.fulcrologic.rad.control :as control]
-    [com.fulcrologic.rad.blob :as blob]
-    [com.fulcrologic.rad.debugging :as debug]
-    [com.fulcrologic.fulcro.dom.events :as evt]
-    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
-    [com.fulcrologic.fulcro.application :as app]
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom :refer [div h3 button i span]]
        :clj  [com.fulcrologic.fulcro.dom-server :as dom :refer [div h3 button i span]])
-    [com.fulcrologic.fulcro.dom.html-entities :as ent]
+    [com.fulcrologic.fulcro-i18n.i18n :refer [tr trf trc]]
     [com.fulcrologic.fulcro.algorithms.form-state :as fs]
-    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
     [com.fulcrologic.fulcro.algorithms.merge :as merge]
-    [taoensso.encore :as enc]
-    [taoensso.timbre :as log]
+    [com.fulcrologic.fulcro.algorithms.tempid :as tempid]
+    [com.fulcrologic.fulcro.application :as app]
+    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
+    [com.fulcrologic.fulcro.dom.events :as evt]
+    [com.fulcrologic.fulcro.dom.html-entities :as ent]
+    [com.fulcrologic.rad.attributes :as attr]
+    [com.fulcrologic.rad.blob :as blob]
+    [com.fulcrologic.rad.control :as control]
+    [com.fulcrologic.rad.debugging :as debug]
+    [com.fulcrologic.rad.form :as form]
+    [com.fulcrologic.rad.form-options :as fo]
+    [com.fulcrologic.rad.options-util :refer [?! narrow-keyword]]
     [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
-    [com.fulcrologic.rad.semantic-ui-options :as suo]))
+    [com.fulcrologic.rad.semantic-ui-options :as suo]
+    [com.fulcrologic.semantic-ui.modules.modal.ui-modal :refer [ui-modal]]
+    [com.fulcrologic.semantic-ui.modules.modal.ui-modal-actions :refer [ui-modal-actions]]
+    [com.fulcrologic.semantic-ui.modules.modal.ui-modal-content :refer [ui-modal-content]]
+    [taoensso.encore :as enc]
+    [taoensso.timbre :as log]))
 
 (defn render-to-many [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} options]
   (let [{:semantic-ui/keys [add-position]
@@ -348,7 +351,6 @@
         read-only-form? (or
                           (?! (comp/component-options form-instance ::form/read-only?) form-instance)
                           (?! (comp/component-options master-form ::form/read-only?) master-form))
-
         {:ui/keys    [new?]
          ::form/keys [errors]} props
         invalid?        (if read-only-form? false (form/invalid? env))
@@ -369,49 +371,61 @@
               (i :.times.icon)))
           (render-fields env)))
       (let [{::form/keys [title action-buttons controls show-header?]} (comp/component-options form-instance)
+            {:ui/keys [route-denied?]} (comp/props form-instance)
             title          (?! title form-instance props)
             action-buttons (if action-buttons action-buttons form/standard-action-buttons)
             show-header?   (cond
                              (some? show-header?) (?! show-header? master-form)
                              (some? (fo/show-header? computed-props)) (?! (fo/show-header? computed-props) master-form)
                              :else true)]
-        (div {:key       (str (comp/get-ident form-instance))
-              :className (or
-                           (?! (suo/get-rendering-options form-instance suo/layout-class) env)
-                           (?! (comp/component-options form-instance suo/layout-class) env)
-                           (?! (comp/component-options form-instance ::top-level-class) env)
-                           "ui container")}
-          (when show-header?
-            (div {:className (or
-                               (?! (suo/get-rendering-options form-instance suo/controls-class) env)
-                               (?! (comp/component-options form-instance ::controls-class) env)
-                               "ui top attached segment")}
-              (div {:style {:display        "flex"
-                            :justifyContent "space-between"
-                            :flexWrap       "wrap"}}
-                (dom/h3 :.ui.header {:style {:wordWrap "break-word" :maxWidth "100%"}}
-                  title)
-                (div :.ui.buttons {:style {:textAlign "right" :display "inline" :flexGrow "1"}}
-                  (keep #(control/render-control master-form %) action-buttons)))))
-          (div {:classes [(or (?! (comp/component-options form-instance ::form-class) env) "ui attached form")
-                          (when errors? "error")]}
-            (when invalid?
-              (div :.ui.red.message (tr "The form has errors and cannot be saved.")))
-            (when (seq errors)
-              (div :.ui.red.message
-                (div :.content
-                  (dom/div :.ui.list
-                    (map-indexed
-                      (fn [idx {:keys [message]}]
-                        (dom/div :.item {:key (str idx)}
-                          (dom/i :.triangle.exclamation.icon)
-                          (div :.content (str message))))
-                      errors))
-                  (when-not new?
-                    (dom/a {:onClick (fn []
-                                       (form/undo-via-load! env))} (tr "Reload from server"))))))
-            (div :.ui.attached.segment
-              (render-fields env))))))))
+        (comp/fragment
+          (ui-modal {:open route-denied?}
+            (ui-modal-content {}
+              "The form has unsaved changes. Do you wish to abandon the changes, or return to editing?")
+            (ui-modal-actions {}
+              (dom/button :.ui.button
+                {:onClick (fn [] (form/clear-route-denied! form-instance))}
+                "Return to Editing")
+              (dom/button :.ui.button
+                {:onClick (fn [] (form/continue-abandoned-route! form-instance))}
+                "Abandon Changes")))
+          (div {:key       (str (comp/get-ident form-instance))
+                :className (or
+                             (?! (suo/get-rendering-options form-instance suo/layout-class) env)
+                             (?! (comp/component-options form-instance suo/layout-class) env)
+                             (?! (comp/component-options form-instance ::top-level-class) env)
+                             "ui container")}
+            (when show-header?
+              (div {:className (or
+                                 (?! (suo/get-rendering-options form-instance suo/controls-class) env)
+                                 (?! (comp/component-options form-instance ::controls-class) env)
+                                 "ui top attached segment")}
+                (div {:style {:display        "flex"
+                              :justifyContent "space-between"
+                              :flexWrap       "wrap"}}
+                  (dom/h3 :.ui.header {:style {:wordWrap "break-word" :maxWidth "100%"}}
+                    title)
+                  (div :.ui.buttons {:style {:textAlign "right" :display "inline" :flexGrow "1"}}
+                    (keep #(control/render-control master-form %) action-buttons)))))
+            (div {:classes [(or (?! (comp/component-options form-instance ::form-class) env) "ui attached form")
+                            (when errors? "error")]}
+              (when invalid?
+                (div :.ui.red.message (tr "The form has errors and cannot be saved.")))
+              (when (seq errors)
+                (div :.ui.red.message
+                  (div :.content
+                    (dom/div :.ui.list
+                      (map-indexed
+                        (fn [idx {:keys [message]}]
+                          (dom/div :.item {:key (str idx)}
+                            (dom/i :.triangle.exclamation.icon)
+                            (div :.content (str message))))
+                        errors))
+                    (when-not new?
+                      (dom/a {:onClick (fn []
+                                         (form/undo-via-load! env))} (tr "Reload from server"))))))
+              (div :.ui.attached.segment
+                (render-fields env)))))))))
 
 (def standard-form-container (comp/factory StandardFormContainer))
 
