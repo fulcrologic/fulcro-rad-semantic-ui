@@ -4,7 +4,7 @@
     <groupId>com.fulcrologic</groupId>
     <artifactId>fulcro-rad-semantic-ui</artifactId>
     <packaging>jar</packaging>
-    <version>1.4.0-RC4</version>
+    <version>1.4.0-RC5-SNAPSHOT</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -23,7 +23,7 @@
         <url>https://github.com/fulcrologic/fulcro-rad-semantic-ui</url>
         <connection>scm:git:git://github.com/fulcrologic/fulcro-rad-semantic-ui.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/fulcrologic/fulcro-rad-semantic-ui.git</developerConnection>
-        <tag>fulcro-rad-semantic-ui-1.4.0-RC4</tag>
+        <tag>fulcro-rad-semantic-ui-0.0.13-alpha</tag>
     </scm>
     <distributionManagement>
         <repository>
