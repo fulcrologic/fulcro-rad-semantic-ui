@@ -20,7 +20,8 @@
                                 (po/load-picker-options! instance (comp/react-type instance) props picker-options))))}
   (let [controls (control/component-controls instance)
         {:keys [label onChange disabled? visible? action placeholder options user-props] :as control} (get controls control-key)
-        options  (or options (po/current-picker-options instance control))]
+        options  (or (?! options instance)
+                     (po/current-picker-options instance control))]
     (when control
       (let [label       (or (?! label instance))
             disabled?   (?! disabled? instance)
@@ -45,4 +46,3 @@
                                                        (action instance))))}))))))))
 
 (def render-control (comp/factory SimplePicker {:keyfn :control-key}))
-
