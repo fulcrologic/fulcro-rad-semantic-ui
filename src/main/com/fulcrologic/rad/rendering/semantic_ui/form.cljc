@@ -260,12 +260,10 @@
     (render-single-file env attr options)))
 
 (defn render-attribute [env attr options]
-  (let [{k ::attr/qualified-key} attr
-        subforms (fo/subform-options options attr)]
-    (if (contains? subforms k)
-      (let [render-ref (or (form/ref-container-renderer env attr) standard-ref-container)]
-        (render-ref env attr options))
-      (form/render-field env attr))))
+  (if (fo/subform-options options attr)
+    (let [render-ref (or (form/ref-container-renderer env attr) standard-ref-container)]
+      (render-ref env attr options))
+    (form/render-field env attr)))
 
 (def n-fields-string {1 "one field"
                       2 "two fields"
