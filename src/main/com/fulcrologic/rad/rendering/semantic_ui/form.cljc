@@ -16,6 +16,7 @@
     [com.fulcrologic.rad.debugging :as debug]
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.form-options :as fo]
+    [com.fulcrologic.rad.form-render-options :as fro]
     [com.fulcrologic.rad.options-util :refer [?! narrow-keyword]]
     [com.fulcrologic.rad.rendering.semantic-ui.form-options :as sufo]
     [com.fulcrologic.rad.semantic-ui-options :as suo]
@@ -260,10 +261,13 @@
     (render-single-file env attr options)))
 
 (defn render-attribute [env attr options]
-  (if (fo/subform-options options attr)
-    (let [render-ref (or (form/ref-container-renderer env attr) standard-ref-container)]
-      (render-ref env attr options))
-    (form/render-field env attr)))
+  (cond
+    (or
+      (fro/fields-style attr)
+      (fro/style attr)) (form/render-field env attr)
+    (fo/subform-options options attr) (let [render-ref (or (form/ref-container-renderer env attr) standard-ref-container)]
+                                        (render-ref env attr options))
+    :else (form/render-field env attr)))
 
 (def n-fields-string {1 "one field"
                       2 "two fields"
