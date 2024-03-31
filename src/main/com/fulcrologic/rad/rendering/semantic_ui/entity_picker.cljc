@@ -112,8 +112,11 @@
             read-only?    (or (form/read-only? master-form attr) (form/read-only? form-instance attr))
             omit-label?   (form/omit-label? form-instance attr)
             invalid?      (and (not read-only?) (form/invalid-attribute-value? env attr))
+            can-edit?     (?! allow-edit? form-instance qualified-key)
+            can-create?   (if-some [v (?! allow-create? form-instance qualified-key)] v (boolean Form))
+            mutable?      (and Form (or can-edit? can-create?))
             extra-props   (cond-> (?! (form/field-style-config env attr :input/props) env)
-                            quick-create (merge {:allowAdditions   true
+                            quick-create (merge {:allowAdditions   can-create?
                                                  :additionPosition "top"
                                                  :onAddItem        (fn [_ data]
                                                                      #?(:cljs
@@ -132,9 +135,6 @@
                                                                           (catch :default e
                                                                             (log/error e "Quick create failed.")))))}))
             top-class     (sufo/top-class form-instance attr)
-            can-edit?     (?! allow-edit? form-instance qualified-key)
-            can-create?   (if-some [v (?! allow-create? form-instance qualified-key)] v (boolean Form))
-            mutable?      (and Form (or can-edit? can-create?))
             onSelect      (fn [v] (form/input-changed! env qualified-key v))
 
             picker-id     (hooks/use-generated-id)
@@ -223,9 +223,10 @@
             cache-key          (or cache-key query-key (log/error "Ref field MUST have either a ::picker-options/cache-key or ::picker-options/query-key in attribute " qualified-key))
             props              (comp/props form-instance)
             options            (get-in props [::po/options-cache cache-key :options])
+            can-create?        (and Form (if-some [v (?! allow-create? form-instance qualified-key)] v (boolean Form)))
             extra-props        (cond-> (?! (form/field-style-config env attr :input/props) env)
                                  (and (= style :dropdown) quick-create)
-                                 (merge {:allowAdditions   true
+                                 (merge {:allowAdditions   can-create?
                                          :additionPosition "top"
                                          :onAddItem        (fn [_ data]
                                                              #?(:cljs
@@ -253,7 +254,6 @@
             read-only?         (form/read-only? form-instance attr)
             omit-label?        (form/omit-label? form-instance attr)
             top-class          (sufo/top-class form-instance attr)
-            can-create?        (and Form (if-some [v (?! allow-create? form-instance qualified-key)] v (boolean Form)))
             validation-message (when invalid? (form/validation-error-message env attr))
 
             picker-id          (hooks/use-generated-id)
