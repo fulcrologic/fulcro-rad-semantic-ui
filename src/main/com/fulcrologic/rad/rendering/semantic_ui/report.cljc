@@ -43,14 +43,15 @@
                                    :disabled? disabled?})
                   label         (?! label report-instance row-props control-props)]
               (when (or (nil? visible?) (?! visible? report-instance row-props))
-                (if report-row-button-renderer
-                  (report-row-button-renderer report-instance row-props control-props)
-                  (if (string? label)
-                    (dom/button :.ui.button {:key      idx
-                                             :disabled disabled?
-                                             :onClick  onClick}
-                      label)
-                    label)))))
+                (dom/span {:key idx}
+                  (if report-row-button-renderer
+                    (report-row-button-renderer report-instance row-props control-props)
+                    (if (string? label)
+                      (dom/button :.ui.button {:key      idx
+                                               :disabled disabled?
+                                               :onClick  onClick}
+                        label)
+                      label))))))
           row-actions)))))
 
 (defn column-alignment-class [report-instance attr]
