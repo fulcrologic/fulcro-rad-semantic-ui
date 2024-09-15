@@ -17,7 +17,7 @@
   {:shouldComponentUpdate (fn [_ _ _] true)}
   (let [controls (control/component-controls instance)
         props    (comp/props instance)
-        {:keys [label onChange icon placeholder disabled? visible? user-props] :as control} (get controls control-key)]
+        {:keys [label onChange icon placeholder onIconClick disabled? visible? user-props] :as control} (get controls control-key)]
     (when control
       (let [label       (?! label instance)
             disabled?   (?! disabled? instance)
@@ -47,6 +47,9 @@
               (dom/label label)
               (if icon
                 (dom/div :.ui.icon.input
+                  {:onClick (fn [evt]
+                              (when onIconClick
+                                (onIconClick instance evt)))}
                   (dom/i {:className (str icon " icon")})
                   inp)
                 inp))))))))
