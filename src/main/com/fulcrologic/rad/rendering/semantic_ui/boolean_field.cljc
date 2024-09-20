@@ -19,21 +19,31 @@
         field-label (form/field-label env attribute)
         visible?    (form/field-visible? form-instance attribute)
         read-only?  (form/read-only? form-instance attribute)
-        omit-label?  (form/omit-label? form-instance attribute)
+        omit-label? (form/omit-label? form-instance attribute)
         top-class   (sufo/top-class form-instance attribute)
-        value       (get props k false)]
+        value       (get props k false)
+        ;; default is label top
+        label-top?  true
+        ;; waiting for the global toggle option
+        toggle?     false]
     (when visible?
       (div {:className (or top-class "ui field")
             :key       (str k)}
-        (div :.ui.checkbox
-          (input (merge
-                   {:checked  value
-                    :type     "checkbox"
-                    :disabled (boolean read-only?)
-                    :onChange (fn [evt]
-                                (let [v (not value)]
-                                  (form/input-blur! env k v)
-                                  (form/input-changed! env k v)))}
-                   user-props))
-          (when-not omit-label? (label field-label)))))))
+           (when label-top?
+             (label field-label))
+           (div :.ui.checkbox
+                {:classes [(when toggle? "toggle")]}
+                (input (merge
+                        {:checked  value
+                         :type     "checkbox"
+                         :disabled (boolean read-only?)
+                         :onChange (fn [evt]
+                                     (let [v (not value)]
+                                       (form/input-blur! env k v)
+                                       (form/input-changed! env k v)))}
+                        user-props))
+                ;; when toggle there must be a label (semantic-ui requirement)
+                (if (or label-top? omit-label?)
+                  (label {} "")
+                  (label field-label)))))))
 
