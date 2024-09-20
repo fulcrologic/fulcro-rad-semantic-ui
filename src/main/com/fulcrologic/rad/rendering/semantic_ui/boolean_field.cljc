@@ -22,8 +22,10 @@
         omit-label? (form/omit-label? form-instance attribute)
         top-class   (sufo/top-class form-instance attribute)
         value       (get props k false)
-        label-top?  (form/field-style-config env attribute :label-top?)
-        toggle?     (form/field-style-config env attribute :toggle?)]
+        ;; default is label top
+        label-top?  true
+        ;; waiting for the global toggle option
+        toggle?     false]
     (when visible?
       (div {:className (or top-class "ui field")
             :key       (str k)}
