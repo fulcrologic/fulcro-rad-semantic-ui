@@ -357,7 +357,9 @@
 (comp/defsc TableReportLayout [this {:keys [report-instance] :as env}]
   {:initLocalState        (fn [this] {:row-factory (memoize (fn [cls] (comp/computed-factory cls
                                                                         {:keyfn (fn [props]
-                                                                                  (some-> props (comp/get-computed ::report/idx)))})))})
+                                                                                  (some-> props
+                                                                                    (comp/get-computed ::report/idx)
+                                                                                    (str "-" (comp/get-ident cls props))))})))})
    :shouldComponentUpdate (fn [_ _ _] true)}
   (let [{::report/keys [rotate?]} (comp/component-options report-instance)
         rotate?         (?! rotate? report-instance)
