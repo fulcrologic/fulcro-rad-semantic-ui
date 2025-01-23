@@ -158,12 +158,19 @@
     (render-to-many env attr options)
     (render-to-one env attr options)))
 
-(defn render-single-file [{::form/keys [form-instance] :as env} {k ::attr/qualified-key :as attr} options]
-  (let [{::form/keys [ui can-delete?]} (fo/subform-options options attr)
+(defsc SingleFile [this {{::form/keys [form-instance master-form] :as env} :env
+                         {k ::attr/qualified-key :as attr}                 :attribute
+                         options                                           :options}]
+  (let [{::form/keys [ui title can-delete? can-add?]} (fo/subform-options options attr)
         parent     (comp/props form-instance)
         form-props (comp/props form-instance)
+        read-only? (or
+                     (form/read-only? master-form attr)
+                     (form/read-only? form-instance attr))
+        add?       (if read-only? false (?! can-add? form-instance attr))
         props      (get form-props k)
         ui-factory (comp/computed-factory ui)
+        title      (?! (or title (some-> ui (comp/component-options ::form/title)) "") form-instance form-props)
         label      (form/field-label env attr)
         visible?   (form/field-visible? form-instance attr)
         top-class  (sufo/top-class form-instance attr)
@@ -172,16 +179,46 @@
                     ::form/parent-relation k
                     ::form/can-delete?     (if can-delete?
                                              (can-delete? parent props)
-                                             false)}]
+                                             false)}
+        upload-id   (str k "-file-upload")
+        add         (when (or (nil? add?) add?)
+                      (dom/div {}
+                        (dom/label :.ui.labeled.green.icon.button {:htmlFor upload-id}
+                          (dom/i :.ui.plus.icon)
+                          (tr "Add File"))
+                        (dom/input {:type     "file"
+                                    ;; trick: changing the key on change clears the input, so a failed upload can be retried
+                                    :key      (comp/get-state this :input-key)
+                                    :id       upload-id
+                                    :style    {:zIndex  -1
+                                               :width   "1px"
+                                               :height  "1px"
+                                               :opacity 0}
+                                    :onChange (fn [evt]
+                                                (let [new-id     (tempid/tempid)
+                                                      js-file    (-> evt blob/evt->js-files first)
+                                                      attributes (comp/component-options ui ::form/attributes)
+                                                      id-attr    (comp/component-options ui ::form/id)
+                                                      id-key     (::attr/qualified-key id-attr)
+                                                      {::attr/keys [qualified-key] :as sha-attr} (first (filter ::blob/store
+                                                                                                          attributes))
+                                                      target     (conj (comp/get-ident form-instance) k)
+                                                      new-entity (fs/add-form-config ui
+                                                                   {id-key        new-id
+                                                                    qualified-key ""})]
+                                                  (merge/merge-component! form-instance ui new-entity :append target)
+                                                  (blob/upload-file! form-instance sha-attr js-file {:file-ident [id-key new-id]})
+                                                  (comp/set-state! this {:input-key (str (rand-int 1000000))})))})))]
     (when visible?
-      (if props
-        (div {:className (or top-class "field")
-              :key       (str k)}
-          (dom/label label)
-          (ui-factory props (merge env std-props)))
-        (div {:className (or top-class "")
-              :key       (str k)}
-          (div (tr "Upload??? (TODO)")))))))
+      (div {:className (or top-class "field")
+            :key       (str k)}
+        (dom/h2 :.ui.header title)
+        (dom/label label)
+        (if props
+          (ui-factory props (merge env std-props))
+          add)))))
+
+(def ui-single-file (comp/factory SingleFile))
 
 (defsc ManyFiles [this {{::form/keys [form-instance master-form] :as env} :env
                         {k ::attr/qualified-key :as attr}                 :attribute
@@ -258,7 +295,7 @@
   [env {::attr/keys [cardinality] :as attr} options]
   (if (= :many cardinality)
     (ui-many-files {:env env :attribute attr :options options})
-    (render-single-file env attr options)))
+    (ui-single-file {:env env :attribute attr :options options})))
 
 (defn render-attribute [env attr options]
   (cond
