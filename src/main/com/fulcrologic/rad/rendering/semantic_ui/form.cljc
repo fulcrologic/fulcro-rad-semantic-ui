@@ -206,7 +206,7 @@
                                                       new-entity (fs/add-form-config ui
                                                                    {id-key        new-id
                                                                     qualified-key ""})]
-                                                  (merge/merge-component! form-instance ui new-entity :append target)
+                                                  (merge/merge-component! form-instance ui new-entity :replace target)
                                                   (blob/upload-file! form-instance sha-attr js-file {:file-ident [id-key new-id]})
                                                   (comp/set-state! this {:input-key (str (rand-int 1000000))})))})))]
     (when visible?
