@@ -11,9 +11,9 @@
     [com.fulcrologic.fulcro.algorithms.merge :as merge]
     [com.fulcrologic.fulcro.algorithms.normalized-state :as fns]
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
+    [com.fulcrologic.fulcro.react.hooks :as hooks]
     [com.fulcrologic.fulcro.data-fetch :as df]
     [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
-    [com.fulcrologic.fulcro.rendering.multiple-roots-renderer :as mroot]
     [com.fulcrologic.rad.attributes :as attr]
     [com.fulcrologic.rad.form :as form]
     [com.fulcrologic.rad.form-options :as fo]
@@ -71,6 +71,13 @@
                                                       :post-mutation        `normalize-options
                                                       :post-mutation-params {:source search-key
                                                                              :target [::autocomplete-id id :ui/options]}}))))
+   :initial-state     (fn [{:keys [id search-key debounce-ms minimum-input]}]
+                        {::autocomplete-id           id
+                         :autocomplete/search-key    search-key
+                         :autocomplete/debounce-ms   debounce-ms
+                         :autocomplete/minimum-input minimum-input
+                         :ui/search-string           ""
+                         :ui/options                 #js []})
    :query             [::autocomplete-id :ui/search-string :ui/options :autocomplete/search-key
                        :autocomplete/debounce-ms :autocomplete/minimum-input]
    :ident             ::autocomplete-id}
@@ -80,6 +87,7 @@
        :cljs
        (dom/div :.field {:className (or className "field")
                          :classes   [(when invalid? "error")]}
+         ;; TASK: Finish testing that this autocomplete works correctly and is properly configurable.
          (when-not omit-label?
            (dom/label label (when invalid? (dom/span " " validation-message))))
          (if read-only?
@@ -109,45 +117,33 @@
     (when id
       (swap! state fns/remove-entity [::autocomplete-id id]))))
 
-(defsc AutocompleteFieldRoot [this props {:keys [env attribute]}]
-  {:initLocalState        (fn [this] {:field-id (ids/new-uuid)})
-   :componentDidMount     (fn [this]
-                            (let [id (comp/get-state this :field-id)
-                                  {:keys [env attribute]} (comp/get-computed this)
-                                  {::form/keys [form-instance]} env
-                                  {:autocomplete/keys [search-key debounce-ms minimum-input]} (fo/get-field-options (comp/component-options form-instance) attribute)]
-                              (merge/merge-component! this AutocompleteField {::autocomplete-id           id
-                                                                              :autocomplete/search-key    search-key
-                                                                              :autocomplete/debounce-ms   debounce-ms
-                                                                              :autocomplete/minimum-input minimum-input
-                                                                              :ui/search-string           ""
-                                                                              :ui/options                 #js []}))
-                            (mroot/register-root! this {:initialize? true}))
-   :shouldComponentUpdate (fn [_ _] true)
-   :initial-state         {::autocomplete-id {}}
-   :componentWillUnmount  (fn [this]
-                            (comp/transact! this [(gc-autocomplete {:id (comp/get-state this :field-id)})])
-                            (mroot/deregister-root! this))
-   :query                 [::autocomplete-id]}
-  (let [{:autocomplete/keys [debounce-ms search-key preload?]} (fo/get-field-options (comp/component-options this) attribute)
-        k                  (::attr/qualified-key attribute)
+(defsc AutocompleteFieldRoot [this _ {:keys [env attribute]}]
+  {:use-hooks?    true
+   :initial-state {::autocomplete-id {}}
+   :query         [::autocomplete-id]}
+  (let [k                  (::attr/qualified-key attribute)
         {::form/keys [form-instance]} env
         top-class          (sufo/top-class form-instance attribute)
+        {:autocomplete/keys [search-key debounce-ms minimum-input]} (fo/get-field-options (comp/component-options form-instance) attribute)
         value              (-> (comp/props form-instance) (get k))
-        id                 (comp/get-state this :field-id)
+        id                 (hooks/use-generated-id)
         label              (form/field-label env attribute)
         read-only?         (form/read-only? form-instance attribute)
         omit-label?        (form/omit-label? form-instance attribute)
         invalid?           (form/invalid-attribute-value? env attribute)
         validation-message (when invalid? (form/validation-error-message env attribute))
-        field              (get-in props [::autocomplete-id id])]
-    ;; Have to pass the id and debounce early since the merge in mount won't happen until after, which is too late for initial
-    ;; state
-    (ui-autocomplete-field (assoc field
-                             ::autocomplete-id id
-                             :autocomplete/search-key search-key
-                             :autocomplete/preload? preload?
-                             :autocomplete/debounce-ms debounce-ms)
+        autocomplete-props (hooks/use-component (comp/any->app this) AutocompleteField
+                             {:initialize?    true
+                              :initial-params
+                              {:id            id
+                               :search-key    search-key
+                               :debounce-ms   debounce-ms
+                               :minimum-input minimum-input}
+                              :keep-existing? false})]
+
+    (hooks/use-gc this [::autocomplete-id id] #{})
+
+    (ui-autocomplete-field autocomplete-props
       (cond-> {:value              value
                :invalid?           invalid?
                :validation-message validation-message
@@ -159,11 +155,11 @@
                                         (when normalized-value (form/input-changed! env k normalized-value))))}
         top-class (assoc :className top-class)))))
 
-(def ui-autocomplete-field-root (mroot/floating-root-factory AutocompleteFieldRoot
+(def ui-autocomplete-field-root (comp/computed-factory AutocompleteFieldRoot
                                   {:keyfn (fn [props] (-> props :attribute ::attr/qualified-key))}))
 
 (defn render-autocomplete-field [env {::attr/keys [cardinality] :or {cardinality :one} :as attribute}]
   (if (= :many cardinality)
     (log/error "Cannot autocomplete to-many attributes with renderer" `render-autocomplete-field)
-    (ui-autocomplete-field-root {:env env :attribute attribute})))
+    (ui-autocomplete-field-root {} {:env env :attribute attribute})))
 
