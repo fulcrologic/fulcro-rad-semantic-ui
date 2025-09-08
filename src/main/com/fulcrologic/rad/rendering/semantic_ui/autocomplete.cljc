@@ -87,7 +87,6 @@
        :cljs
        (dom/div :.field {:className (or className "field")
                          :classes   [(when invalid? "error")]}
-         ;; TASK: Finish testing that this autocomplete works correctly and is properly configurable.
          (when-not omit-label?
            (dom/label label (when invalid? (dom/span " " validation-message))))
          (if read-only?
