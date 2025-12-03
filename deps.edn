@@ -1,5 +1,5 @@
 {:paths ["src/main"]
- :deps  {com.fulcrologic/fulcro-rad          {:mvn/version "1.6.0-RC4"}
-         com.fulcrologic/semantic-ui-wrapper {:mvn/version "2.1.4"}
+ :deps  {com.fulcrologic/fulcro-rad          {:mvn/version "1.6.18"}
+         com.fulcrologic/semantic-ui-wrapper {:mvn/version "2.1.5"}
          org.clojure/clojure                 {:mvn/version "1.10.1" :scope "provided"}
          org.clojure/clojurescript           {:mvn/version "1.10.764" :scope "provided"}}}
