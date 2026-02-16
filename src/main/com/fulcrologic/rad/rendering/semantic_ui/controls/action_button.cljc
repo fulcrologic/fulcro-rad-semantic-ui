@@ -1,11 +1,10 @@
 (ns com.fulcrologic.rad.rendering.semantic-ui.controls.action-button
   (:require
-    [taoensso.timbre :as log]
-    [com.fulcrologic.rad.report :as report]
-    [com.fulcrologic.rad.options-util :refer [?!]]
-    [com.fulcrologic.rad.semantic-ui-options :as suo]
+    [com.fulcrologic.fulcro.algorithms.lambda :refer [->arity-tolerant]]
     [com.fulcrologic.fulcro.data-fetch :as df]
     [com.fulcrologic.rad.control :as control]
+    [com.fulcrologic.rad.options-util :refer [?!]]
+    [com.fulcrologic.rad.semantic-ui-options :as suo]
     #?(:cljs [com.fulcrologic.fulcro.dom :as dom]
        :clj  [com.fulcrologic.fulcro.dom-server :as dom])
     [com.fulcrologic.fulcro.components :as comp :refer [defsc]]))
@@ -22,7 +21,7 @@
             loading?  (df/loading? (get-in props [df/marker-table (comp/get-ident instance)]))
             disabled? (or loading? (?! disabled? instance))
             visible?  (or (nil? visible?) (?! visible? instance))
-            onClick   (fn [] (when action (action instance control-key)))]
+            onClick   (fn onClick* [& _] (when action ((->arity-tolerant action) instance control-key)))]
         (when visible?
           (or
             (?! render instance (merge control
