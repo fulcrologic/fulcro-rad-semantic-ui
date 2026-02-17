@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.fulcrologic</groupId>
     <artifactId>fulcro-rad-semantic-ui</artifactId>
     <packaging>jar</packaging>
-    <version>1.4.8-SNAPSHOT</version>
+    <version>1.4.8</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -24,7 +23,7 @@
         <url>https://github.com/fulcrologic/fulcro-rad-semantic-ui</url>
         <connection>scm:git:git://github.com/fulcrologic/fulcro-rad-semantic-ui.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/fulcrologic/fulcro-rad-semantic-ui.git</developerConnection>
-        <tag>fulcro-rad-semantic-ui-1.4.5</tag>
+        <tag>fulcro-rad-semantic-ui-1.4.8</tag>
     </scm>
     <distributionManagement>
         <repository>
